@@ -28,6 +28,8 @@ variablesNamed <- c('Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuse
 # prepare visualization #
 #########################
 
+
+
 gradientColors <- c('#E5F5E0','#E7F3DD','#EAF2DB','#ECF1D8','#EFEFD6','#F1EED4',
 '#F4EDD1','#F6EBCF','#F9EACC','#FBE9CA','#FEE8C8')
 

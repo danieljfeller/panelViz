@@ -64,30 +64,42 @@ server <- function(input, output) {
   
   # data table
   output$patientDF = DT::renderDT(server=FALSE,{
-
+    
+    # retrieve only those columns in selection
+    BinarySelection <- c('VLS', 'drugAbuse', 'etohAbuse', 'LTFU',
+                   'UnstableHousing', 'MissedApt', 'NewDx', 'HCV',
+                   'HTN', 'behavioralDx') %in% input$selectedVariables
+    cd4Selection <- 'CD4' %in% input$selectedVariables
+    costSelection <- 'Cost' %in% input$selectedVariables
+    riskSelection <- 'hospitalizationRisk' %in% input$selectedVariables
+    hbac1Selection <- 'HbA1c' %in% input$selectedVariables
+    
+    # plot data
       DT::datatable(
-        df %>% select(c('Name', variables)),
+        df[-1,] %>% select(c('Name', input$selectedVariables)),
+        rownames = FALSE, 
         colnames = c(ID = 1),  # add the name 
         extensions = 'RowReorder',
         selection = 'none',
-        options = list(order = list(list(0, 'asc')), 
+        autoHideNavigation = TRUE,
+        options = list(pageLength = 100,
+                       order = list(list(0, 'asc')), 
                        rowReorder = TRUE)) %>%
         # add color to binary variables
         formatStyle(c('VLS', 'drugAbuse', 'etohAbuse', 'LTFU',
                       'UnstableHousing', 'MissedApt', 'NewDx', 'HCV',
-                      'HTN', 'behavioralDx'), 
+                      'HTN', 'behavioralDx')[BinarySelection], 
                     backgroundColor = styleEqual(c('No', 'Yes'), c('#e5f5e0', '#fee8c8')), 
                     fontWeight = 'bold') %>%
         # add colors to continuous variables
-        formatStyle('CD4', 
+        formatStyle(c('CD4')[cd4Selection], 
                     backgroundColor = styleInterval(cd4_brks, gradientColors)) %>%
-        formatStyle('hospitalizationRisk', 
+        formatStyle(c('hospitalizationRisk')[riskSelection], 
                     backgroundColor = styleInterval(hosp_risk_brks, gradientColors)) %>%
-        formatStyle('Cost', 
+        formatStyle(c('Cost')[costSelection], 
                     backgroundColor = styleInterval(cost_brks, gradientColors)) %>%
-        formatStyle('HbA1c', 
+        formatStyle(c('HbA1c')[hbac1Selection], 
                     backgroundColor = styleInterval(hba1c_brks, gradientColors)) 
-      
   })
 }
 
