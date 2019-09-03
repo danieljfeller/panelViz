@@ -1,4 +1,4 @@
-﻿patient,suppressed_viral_load,hospitalization_risk,substance_abuser,alcohol_abuser,lost_to_care,cd4,hba1c,unstably_housed,misses_appointments,new_patient,active_hcv,cost_of_care,hypertension,mental_health_disorder
+﻿Name,VLS,hospitalizationRisk,drugAbuse,etohAbuse,LTFU,CD4,HbA1c,UnstableHousing,MissedApt,NewDx,HCV,Cost,HTN,behavioralDx
 Winston Marsalis,0,0.996698645,1,0,0,350,5,0,0,0,0,12154,0,0
 Theolonious Monk,0,0.380286497,0,0,0,550,5,0,0,0,0,4300,1,0
 Charles Mingus,0,0.583426708,0,0,0,515,5,0,0,0,0,3000,0,0

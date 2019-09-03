@@ -1,26 +1,46 @@
 library(shinyjqui)
 library(DT)
 
+######################
+# load & format data #
+######################
+
+
 df <- read.csv('data/synthetic_patients.csv') %>%
-  mutate(suppressed_viral_load = ifelse(as.logical(suppressed_viral_load) == TRUE, "Yes", "No"),
-         substance_abuser = ifelse(as.logical(substance_abuser) == TRUE, "Yes", "No"), 
-         alcohol_abuser = ifelse(as.logical(alcohol_abuser) == TRUE, "Yes", "No"),
-         lost_to_care = ifelse(as.logical(lost_to_care) == TRUE, "Yes", "No"),
-         unstably_housed = ifelse(as.logical(unstably_housed) == TRUE, "Yes", "No"),
-         misses_appointments = ifelse(as.logical(misses_appointments) == TRUE, "Yes", "No"),
-         new_patient = ifelse(as.logical(new_patient) == TRUE, "Yes", "No"),
-         active_hcv = ifelse(as.logical(active_hcv) == TRUE, "Yes", "No"),
-         hypertension = ifelse(as.logical(hypertension) == TRUE, "Yes", "No"),
-         mental_health_disorder = ifelse(as.logical(mental_health_disorder) == TRUE, "Yes", "No")
+  mutate(VLS = ifelse(as.logical(VLS) == TRUE, "Yes", "No"),
+         drugAbuse = ifelse(as.logical(drugAbuse) == TRUE, "Yes", "No"), 
+         etohAbuse = ifelse(as.logical(etohAbuse) == TRUE, "Yes", "No"),
+         LTFU = ifelse(as.logical(LTFU) == TRUE, "Yes", "No"),
+         UnstableHousing = ifelse(as.logical(UnstableHousing) == TRUE, "Yes", "No"),
+         MissedApt = ifelse(as.logical(MissedApt) == TRUE, "Yes", "No"),
+         NewDx = ifelse(as.logical(NewDx) == TRUE, "Yes", "No"),
+         HCV = ifelse(as.logical(HCV) == TRUE, "Yes", "No"),
+         HTN = ifelse(as.logical(HTN) == TRUE, "Yes", "No"),
+         behavioralDx = ifelse(as.logical(behavioralDx) == TRUE, "Yes", "No")
   )
     
-    
-    
+
 variables = colnames(df)[-c(1)]
 variablesNamed <- c('Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuser', 'Lost to Care', 'CD4+ count', 'HbA1c measurement',
                     'Unstable Housing', 'Recent Missed Appointment', 'Newly Diagnosed HIV', 'Active HCV', 'High Cost Patient', 'Unmanaged Hypertension',
                     'Mental Health Disorder')
 
+#########################
+# prepare visualization #
+#########################
+
+gradientColors <- c('#E5F5E0','#E7F3DD','#EAF2DB','#ECF1D8','#EFEFD6','#F1EED4',
+                    '#F4EDD1','#F6EBCF','#F9EACC','#FBE9CA','#FEE8C8')
+
+cd4_brks <- quantile(df$CD4, probs = seq(.05, .95, .10), na.rm = TRUE)
+hosp_risk_brks <- quantile(df$hospitalizationRisk, probs = seq(.05, .95, .10), na.rm = TRUE)
+cost_brks <- quantile(df$Cost, probs = seq(.05, .95, .10), na.rm = TRUE)
+hba1c_brks <- quantile(df$HbA1c, probs = seq(.05, .95, .10), na.rm = TRUE)
+    
+##############
+# create UI #
+#############
+    
 ui <- basicPage(
   h2("Who are my high-risk patients?"),
   
@@ -36,21 +56,38 @@ ui <- basicPage(
   )
 )
 
+##################
+# create server #
+#################
+
 server <- function(input, output) {
   
   # data table
   output$patientDF = DT::renderDT(server=FALSE,{
-    DT::datatable(
-      df %>% 
-        select(c('patient', input$selectedVariables)),
-      colnames = c(ID = 1),  # add the name 
-      extensions = 'RowReorder',
-      selection = 'none',
-      options = list(order = list(list(0, 'asc')), 
-                     rowReorder = TRUE,
-                     autoWidth = TRUE,
-                     columnDefs = list(list(width = '100px', targets = "_all"))) 
-      )
+
+      DT::datatable(
+        df %>% select(c('Name', variables)),
+        colnames = c(ID = 1),  # add the name 
+        extensions = 'RowReorder',
+        selection = 'none',
+        options = list(order = list(list(0, 'asc')), 
+                       rowReorder = TRUE)) %>%
+        # add color to binary variables
+        formatStyle(c('VLS', 'drugAbuse', 'etohAbuse', 'LTFU',
+                      'UnstableHousing', 'MissedApt', 'NewDx', 'HCV',
+                      'HTN', 'behavioralDx'), 
+                    backgroundColor = styleEqual(c('No', 'Yes'), c('#e5f5e0', '#fee8c8')), 
+                    fontWeight = 'bold') %>%
+        # add colors to continuous variables
+        formatStyle('CD4', 
+                    backgroundColor = styleInterval(cd4_brks, gradientColors)) %>%
+        formatStyle('hospitalizationRisk', 
+                    backgroundColor = styleInterval(hosp_risk_brks, gradientColors)) %>%
+        formatStyle('Cost', 
+                    backgroundColor = styleInterval(cost_brks, gradientColors)) %>%
+        formatStyle('HbA1c', 
+                    backgroundColor = styleInterval(hba1c_brks, gradientColors)) 
+      
   })
 }
 
