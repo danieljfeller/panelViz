@@ -1,0 +1,13 @@
+name: panelViz
+title: panelViz
+username:
+account: djf2150
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1149381
+bundleId: 2386568
+url: https://djf2150.shinyapps.io/panelViz/
+when: 1567649371.39825
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: bootstrap.css|colorCells.R|dragVariables.R|README.md|scratch.R
