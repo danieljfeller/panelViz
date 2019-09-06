@@ -3,16 +3,17 @@ library(DT)
 library(shinythemes)
 library(dplyr)
 
-######################
-# load & format data #
-######################
+####################
+# define functions #
+####################
+
 # convert logical vector to character
 toFactor <- function(x){
     return(as.factor(ifelse(as.logical(x) == TRUE, "Yes", "No")))
 }
 
-# compute Rank-Order-Centroids
-magiq <- function(list){
+# computes MAGIQ weights for an ordered list
+magiqWeights <- function(list){
     weights <- c()
     for (i in 1:length(list)){
         weights[i] <- (1/i)/length(list)
@@ -20,54 +21,20 @@ magiq <- function(list){
     return(weights)
 }
 
-
-df <- read.csv('synthetic_patients.csv') %>%
-    mutate(VLS = toFactor(VLS),
-           drugAbuse =toFactor(drugAbuse), 
-           etohAbuse = toFactor(etohAbuse),
-           LTFU = toFactor(LTFU),
-           UnstableHousing = toFactor(UnstableHousing),
-           MissedApt = toFactor(MissedApt),
-           NewDx = toFactor(NewDx),
-           HCV = toFactor(HCV),
-           HTN = toFactor(HTN),
-           behavioralDx = toFactor(behavioralDx),
-           hospitalizationRisk = round(hospitalizationRisk, digits = 2)
-    )
-
-
-variables = colnames(df)[-c(1)]
-variablesNamed <- c('Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuser', 'Lost to Care', 'CD4+ count', 'HbA1c measurement',
-                    'Unstable Housing', 'Recent Missed Appointment', 'Newly Diagnosed HIV', 'Active HCV', 'High Cost Patient', 'Unmanaged Hypertension',
-                    'Mental Health Disorder')
-
-#########################
-# prepare visualization #
-#########################
-
-patientColors <- c('#a1d99b', '#a2d89b', '#a4d89a', '#a5d79a', '#a6d799', '#a8d699', 
-                   '#a9d598', '#aad598', '#abd498', '#add397', '#aed397', '#afd296', '#b0d196', 
-                   '#b1d195', '#b3d095', '#b4d095', '#b5cf94', '#b6ce94', '#b7ce93', '#b8cd93', 
-                   '#b9cc92', '#bacc92', '#bbcb92', '#bdca91', '#beca91', '#bfc990', '#c0c890', 
-                   '#c1c88f', '#c2c78f', '#c3c68f', '#c4c68e', '#c5c58e', '#c6c48d', '#c7c48d', 
-                   '#c8c38d', '#c9c28c', '#cac28c', '#cbc18b', '#ccc08b', '#cdc08a', '#cebf8a', 
-                   '#cebe8a', '#cfbe89', '#d0bd89', '#d1bc88', '#d2bc88', '#d3bb87', '#d4ba87', 
-                   '#d5ba87', '#d6b986', '#d7b886', '#d7b785', '#d8b785', '#d9b685', '#dab584', 
-                   '#dbb584', '#dcb483', '#ddb383', '#ddb283', '#deb282', '#dfb182', '#e0b081', 
-                   '#e1b081', '#e2af80', '#e2ae80', '#e3ad80', '#e4ad7f', '#e5ac7f', '#e6ab7e', 
-                   '#e6aa7e', '#e7aa7e', '#e8a97d', '#e9a87d', '#e9a77c', '#eaa67c', '#eba67c', 
-                   '#eca57b', '#eca47b', '#eda37a', '#eea37a', '#efa27a', '#efa179', '#f0a079', 
-                   '#f19f78', '#f29f78', '#f29e78', '#f39d77', '#f49c77', '#f49b76', '#f59b76', 
-                   '#f69a76', '#f79975', '#f79875', '#f89774', '#f99674', '#f99574', '#fa9573', 
-                   '#fb9473', '#fb9372', '#fc9272')
-
-gradientColors <- c('#a1d99b', '#aed397', '#b9cc93', '#c4c68e', '#cdbf8a', 
-                    '#d6b986', '#dfb182', '#e7aa7e', '#eea27a', '#f59a76', '#fc9272')
-
-cd4_brks <- quantile(df$CD4, probs = seq(.05, .95, .10), na.rm = TRUE)
-hosp_risk_brks <- quantile(df$hospitalizationRisk, probs = seq(.05, .95, .10), na.rm = TRUE)
-cost_brks <- quantile(df$Cost, probs = seq(.05, .95, .10), na.rm = TRUE)
-hba1c_brks <- quantile(df$HbA1c, probs = seq(.05, .95, .10), na.rm = TRUE)
+# computes weighted sum for patients in dataframe
+computeWeightedSum <- function(X, orderList){
+    
+    # compute weight for each column in orderList
+    weights <- magiqWeights(selectedOrder)
+    
+    # compute weighted sum for each patient
+    weightSum <- 0
+    for (i in 1:length(selectedOrder)){
+        weightSum <- weightSum + X[selectedOrder[i]]*weights[i]
+    }
+    
+    return(weightSum)
+}
 
 # generates list for dplyr::arrange
 formatSort <- function(selectedOrder){
@@ -82,25 +49,86 @@ formatSort <- function(selectedOrder){
     )
 }
 
-##############
+######################
+# load & format data #
+######################
+
+df <- read.csv('synthetic_patients.csv') %>%
+    mutate(VLS = toFactor(VLS),
+           drugAbuse =toFactor(drugAbuse), 
+           etohAbuse = toFactor(etohAbuse),
+           LTFU = toFactor(LTFU),
+           UnstableHousing = toFactor(UnstableHousing),
+           MissedApt = toFactor(MissedApt),
+           NewDx = toFactor(NewDx),
+           HCV = toFactor(HCV),
+           HTN = toFactor(HTN),
+           behavioralDx = toFactor(behavioralDx),
+           hospitalizationRisk = round(hospitalizationRisk, digits = 2))
+
+variables = colnames(df)[-c(1)]
+variablesNamed <- c('Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuser', 'Lost to Care', 'CD4+ count', 'HbA1c measurement',
+                    'Unstable Housing', 'Recent Missed Appointment', 'Newly Diagnosed HIV', 'Active HCV', 'High Cost Patient', 'Unmanaged Hypertension',
+                    'Mental Health Disorder')
+
+#########################
+# prepare visualization #
+#########################
+
+patientColors <- c('#fc9272', '#fa9473', '#f89574', '#f69775', '#f49876', '#f29a76', '#f19b77', 
+                   '#ef9c78', '#ee9d78', '#ec9e79', '#eba07a', '#e9a17a', '#e8a27b', '#e7a37c', 
+                   '#e5a47c', '#e4a57d', '#e3a67d', '#e2a67e', '#e1a77e', '#dfa87f', '#dea97f', 
+                   '#ddaa80', '#dcab80', '#dbac81', '#daac81', '#d9ad82', '#d8ae82', '#d7af83', 
+                   '#d6b083', '#d5b083', '#d4b184', '#d3b284', '#d2b385', '#d1b385', '#d1b486', 
+                   '#d0b586', '#cfb586', '#ceb687', '#cdb787', '#ccb788', '#cbb888', '#cab988', 
+                   '#cab989', '#c9ba89', '#c8ba89', '#c7bb8a', '#c6bc8a', '#c6bc8a', '#c5bd8b', 
+                   '#c4be8b', '#c3be8c', '#c3bf8c', '#c2bf8c', '#c1c08d', '#c0c18d', '#bfc18d', 
+                   '#bfc28e', '#bec28e', '#bdc38e', '#bcc48f', '#bcc48f', '#bbc58f', '#bac590', 
+                   '#bac690', '#b9c690', '#b8c790', '#b8c791', '#b7c891', '#b6c991', '#b5c992', 
+                   '#b5ca92', '#b4ca92', '#b3cb93', '#b3cb93', '#b2cc93', '#b1cc94', '#b1cd94', 
+                   '#b0cd94', '#afce95', '#afce95', '#aecf95', '#aecf95', '#add096', '#acd096', 
+                   '#acd196', '#abd197', '#aad297', '#aad297', '#a9d397', '#a8d398', '#a8d498', 
+                   '#a7d498', '#a6d599', '#a6d599', '#a5d699', '#a5d699', '#a4d79a', '#a3d79a', 
+                   '#a3d89a', '#a2d89a', '#a2d99b', '#a1d99b')
+
+gradientColors <- c('#a1d99b', '#aed397', '#b9cc93', '#c4c68e', '#cdbf8a', 
+                    '#d6b986', '#dfb182', '#e7aa7e', '#eea27a', '#f59a76', '#fc9272')
+
+# quantiles for all numeric variables
+cd4_brks <- quantile(df$CD4, probs = seq(.05, .95, .10), na.rm = TRUE)
+hosp_risk_brks <- quantile(df$hospitalizationRisk, probs = seq(.05, .95, .10), na.rm = TRUE)
+cost_brks <- quantile(df$Cost, probs = seq(.05, .95, .10), na.rm = TRUE)
+hba1c_brks <- quantile(df$HbA1c, probs = seq(.05, .95, .10), na.rm = TRUE)
+
+#############
 # create UI #
 #############
 
 ui <- fluidPage(theme = shinytheme("lumen"),
-                h2("Who are my high-risk patients?"),
                 
                 sidebarLayout(
+                    
+                    #######################
+                    # interaction widgets #
+                    #######################
+                    
                     sidebarPanel(width = 2,
                                  # add sidebarPanel,
                                  sortableCheckboxGroupInput("selectedVariables", "Indicators",
                                                             choices = variables,
-                                                            selected = 'VLS'),
+                                                            selected = c('VLS', 'etohAbuse', 'hospitalizationRisk')),
                                  selectInput("sortMethod", "Sorting Method:",
                                              c("No Sorting" = 'noSort',
                                                "Hard Sorting" = "hardSort",
-                                               "Weighted Sorting" = "weightedSort")),
-                                 checkboxInput("rankRows", "Rank Sort Patients", value = FALSE)
+                                               "Weighted Sorting" = "weightedSort"),
+                                             selected = 'weightedSort'),
+                                 checkboxInput("rankRows", "Visualize Patient Rank", value = TRUE)
                     ),
+                    
+                    #######################
+                    # table visualization #
+                    #######################
+                    
                     mainPanel(
                         DT::dataTableOutput("patientDF")
                     )
@@ -112,13 +140,6 @@ ui <- fluidPage(theme = shinytheme("lumen"),
 #################
 
 server <- function(input, output) {
-    
-    output$order <- renderPrint({
-        formatSort(
-            input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables]
-        )
-    })
-    
     
     # data table
     output$patientDF = DT::renderDT(server=FALSE,{
@@ -133,43 +154,62 @@ server <- function(input, output) {
         hbac1Selection <- 'HbA1c' %in% input$selectedVariables
         
         # get weights for each column
-        columnWeights <- magiq(input$selectedVariables)
+        raw_df <- read.csv('synthetic_patients.csv')
+        raw_df$weightRank <- computeWeightedSum(raw_df,
+                           input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables])$VLS
         
-        # plot data
+        # get quantiles for patient rank
+        patient_brks <- quantile(as.numeric(row.names(df)), probs = seq(0, 1, .01))
+        
+        #########################
+        # select sorting method #
+        #########################
+        
         DT::datatable(
             # don't sort data
             if (input$sortMethod == 'noSort'){
-                df[-1,] %>% 
-                select(c('Name', input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables]))
+                df %>% 
+                select(c('Name', input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables])) %>%
+                    tibble::rownames_to_column()
             }
             # sort data deterministicly
             else if (input$sortMethod == 'hardSort') {
-                df[-1,] %>%  
+                df %>%  
                 select(c('Name', input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables])) %>% 
                 arrange_at(
                     input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables],
-                    desc) 
+                    desc) %>%
+                    tibble::rownames_to_column()
             }
             # use MAGIQ weighting
             else {
-                df[-1,]
+                merge(df, raw_df[c('Name', 'weightRank')], by = 'Name') %>% 
+                    arrange(desc(weightRank)) %>%
+                    select(c('Name', input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables])) %>%
+                    tibble::rownames_to_column()
         },
+        
+        ###################
+        # format DT table #
+        ###################
+        
             filter = 'top',
             rownames = FALSE, 
-            colnames = c(ID = 1),  # add the name 
             extensions = 'RowReorder',
             selection = 'none',
             autoHideNavigation = TRUE,
             options = list(fixedHeader = TRUE,
                            pageLength = 100,
+                           columnDefs = list(list(visible=FALSE, targets=c(0))),
                            rowReorder = TRUE)) %>%
+            
             # add color to binary variables 
-            formatStyle('ID', fontWeight = 'bold') %>%
             formatStyle(c('VLS', 'drugAbuse', 'etohAbuse', 'LTFU',
                           'UnstableHousing', 'MissedApt', 'NewDx', 'HCV',
                           'HTN', 'behavioralDx')[BinarySelection], 
                         backgroundColor = styleEqual(c('No', 'Yes'), c('#a1d99b', '#fc9272')), 
                         fontWeight = 'bold') %>%
+            
             # add colors to continuous variables
             formatStyle(c('CD4')[cd4Selection], 
                         backgroundColor = styleInterval(cd4_brks, gradientColors), fontWeight = 'bold') %>%
@@ -178,9 +218,16 @@ server <- function(input, output) {
             formatStyle(c('Cost')[costSelection], 
                         backgroundColor = styleInterval(cost_brks, gradientColors), fontWeight = 'bold') %>%
             formatStyle(c('HbA1c')[hbac1Selection], 
-                        backgroundColor = styleInterval(hba1c_brks, gradientColors), fontWeight = 'bold') 
+                        backgroundColor = styleInterval(hba1c_brks, gradientColors), fontWeight = 'bold') %>%
+            
+            # add color to patient names
+            formatStyle(ifelse(input$rankRows == TRUE, 'Name', 'rowname'), 'rowname', 
+                        backgroundColor = styleInterval(patient_brks, patientColors), fontWeight = 'bold')
     })
 }
 
-# Run the application 
+#####################
+# run the shiny app #
+#####################
+
 shinyApp(ui = ui, server = server)
