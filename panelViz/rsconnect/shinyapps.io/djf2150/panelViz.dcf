@@ -5,8 +5,8 @@ account: djf2150
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1149381
-bundleId: 2390159
+bundleId: 2395423
 url: https://djf2150.shinyapps.io/panelViz/
-when: 1567736974.27152
+when: 1567894066.15709
 asMultiple: FALSE
 asStatic: FALSE

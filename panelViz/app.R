@@ -2,6 +2,7 @@ library(shinyjqui)
 library(DT)
 library(shinythemes)
 library(dplyr)
+library(d3heatmap)
 
 ####################
 # define functions #
@@ -52,7 +53,7 @@ formatSort <- function(selectedOrder){
 ######################
 # load & format data #
 ######################
-
+rawDF <- read.csv('synthetic_patients.csv')
 df <- read.csv('synthetic_patients.csv') %>%
     mutate(VLS = toFactor(VLS),
            drugAbuse =toFactor(drugAbuse), 
@@ -104,7 +105,7 @@ hba1c_brks <- quantile(df$HbA1c, probs = seq(.05, .95, .10), na.rm = TRUE)
 # create UI #
 #############
 
-ui <- fluidPage(theme = shinytheme("lumen"),
+ui <- fluidPage(theme = shinytheme("sandstone"),
                 
                 sidebarLayout(
                     
@@ -130,9 +131,22 @@ ui <- fluidPage(theme = shinytheme("lumen"),
                     #######################
                     
                     mainPanel(
-                        DT::dataTableOutput("patientDF")
+                        tabsetPanel(
+                            tabPanel("Rank", DT::dataTableOutput("patientDF")),
+                            tabPanel("Group", 
+                                     sliderInput("clusters",
+                                                 label = "Clusters",
+                                                 min = 1,
+                                                 max = 25,
+                                                 value = 9),
+                                     d3heatmapOutput("heatmap",
+                                                              height = 600,
+                                                              width = 800)
+                                     ),
+                            tabPanel("Visualize", plotOutput("plot"))
                     )
                 )
+    )
 )
 
 ##################
@@ -208,21 +222,41 @@ server <- function(input, output) {
                           'UnstableHousing', 'MissedApt', 'NewDx', 'HCV',
                           'HTN', 'behavioralDx')[BinarySelection], 
                         backgroundColor = styleEqual(c('No', 'Yes'), c('#a1d99b', '#fc9272')), 
+                        color = 'white',
                         fontWeight = 'bold') %>%
             
             # add colors to continuous variables
             formatStyle(c('CD4')[cd4Selection], 
-                        backgroundColor = styleInterval(cd4_brks, gradientColors), fontWeight = 'bold') %>%
+                        backgroundColor = styleInterval(cd4_brks, gradientColors), 
+                        color = 'white',
+                        fontWeight = 'bold') %>%
             formatStyle(c('hospitalizationRisk')[riskSelection], 
-                        backgroundColor = styleInterval(hosp_risk_brks, gradientColors), fontWeight = 'bold') %>%
+                        backgroundColor = styleInterval(hosp_risk_brks, gradientColors), 
+                        color = 'white',
+                        fontWeight = 'bold') %>%
             formatStyle(c('Cost')[costSelection], 
-                        backgroundColor = styleInterval(cost_brks, gradientColors), fontWeight = 'bold') %>%
+                        backgroundColor = styleInterval(cost_brks, gradientColors), 
+                        color = 'white',
+                        fontWeight = 'bold') %>%
             formatStyle(c('HbA1c')[hbac1Selection], 
-                        backgroundColor = styleInterval(hba1c_brks, gradientColors), fontWeight = 'bold') %>%
+                        backgroundColor = styleInterval(hba1c_brks, gradientColors), 
+                        color = 'white',
+                        fontWeight = 'bold') %>%
             
             # add color to patient names
             formatStyle(ifelse(input$rankRows == TRUE, 'Name', 'rowname'), 'rowname', 
-                        backgroundColor = styleInterval(patient_brks, patientColors), fontWeight = 'bold')
+                        backgroundColor = styleInterval(patient_brks, patientColors), 
+                        color = 'white',
+                        fontWeight = 'bold')
+    })
+    
+    output$heatmap <- renderD3heatmap({
+        d3heatmap(rawDF %>% select(input$selectedVariables), 
+                  scale = "none",
+                  dendrogram = 'row',
+                  labRow = Names,
+                  color = c('#a1d99b', '#fc9272'),
+                  k_row = input$clusters)
     })
 }
 
