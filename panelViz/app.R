@@ -13,7 +13,17 @@ toFactor <- function(x){
     return(as.factor(ifelse(as.logical(x) == TRUE, "Yes", "No")))
 }
 
-# computes MAGIQ weights for an ordered list
+# range standardization
+standard_range <- function(x){
+    (x-min(x))/(max(x)-min(x))
+}
+
+# converts Yes/No to 1/0
+yes2one <- function(x){
+    return(ifelse(x =='Yes', 1, 0))
+}
+
+# computes MAGIQ weights for an ordered list of column names
 magiqWeights <- function(list){
     weights <- c()
     for (i in 1:length(list)){
@@ -24,16 +34,21 @@ magiqWeights <- function(list){
 
 # computes weighted sum for patients in dataframe
 computeWeightedSum <- function(X, orderList){
-    
     # compute weight for each column in orderList
-    weights <- magiqWeights(selectedOrder)
-    
+    weights <- magiqWeights(orderList)
     # compute weighted sum for each patient
     weightSum <- 0
-    for (i in 1:length(selectedOrder)){
-        weightSum <- weightSum + X[selectedOrder[i]]*weights[i]
+    for (i in 1:length(orderList)){
+        
+        if (any(X[orderList[i]] == 'No' | X[orderList[i]] == 'Yes')){
+            vector <- yes2one(X[orderList[i]])
+        }
+        else {
+            vector <- X[orderList[i]]
+        }
+        weighted_vector <-standard_range(vector)*weights[i]
+        weightSum <- weightSum + weighted_vector
     }
-    
     return(weightSum)
 }
 
@@ -53,7 +68,9 @@ formatSort <- function(selectedOrder){
 ######################
 # load & format data #
 ######################
-rawDF <- read.csv('synthetic_patients.csv')
+rawDF <- read.csv('synthetic_patients.csv')[1:500,]
+pt.names <- rawDF$Name
+
 df <- read.csv('synthetic_patients.csv') %>%
     mutate(VLS = toFactor(VLS),
            drugAbuse =toFactor(drugAbuse), 
@@ -71,6 +88,27 @@ variables = colnames(df)[-c(1)]
 variablesNamed <- c('Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuser', 'Lost to Care', 'CD4+ count', 'HbA1c measurement',
                     'Unstable Housing', 'Recent Missed Appointment', 'Newly Diagnosed HIV', 'Active HCV', 'High Cost Patient', 'Unmanaged Hypertension',
                     'Mental Health Disorder')
+
+###############################
+# format data for hexbin plot #
+###############################
+
+df$rank <- row_number(df$Name)
+df$j <- 1
+df$i <- 1
+
+counter = 0
+offset <- 0.5 #offset for the hexagons when moving up a row
+for (row in 1:22){
+    # change offset when increasing rows
+    offset <- ifelse(offset == 0.5, 0, 0.5)
+    for (column in 1:22){
+        counter <- counter + 1
+        df[df$rank == counter,]$i <- row
+        df[df$rank == counter,]$j <- column + offset
+        print(paste(counter, row, column + offset))
+    }
+}
 
 #########################
 # prepare visualization #
@@ -132,7 +170,10 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                     
                     mainPanel(
                         tabsetPanel(
-                            tabPanel("Rank", DT::dataTableOutput("patientDF")),
+                            tabPanel("Overview", 
+                                     plotOutput("hex_plot")),
+                            tabPanel("Rank", 
+                                     DT::dataTableOutput("patientDF")),
                             tabPanel("Group", 
                                      sliderInput("clusters",
                                                  label = "Clusters",
@@ -142,8 +183,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                      d3heatmapOutput("heatmap",
                                                               height = 600,
                                                               width = 800)
-                                     ),
-                            tabPanel("Visualize", plotOutput("plot"))
+                                     )
                     )
                 )
     )
@@ -254,9 +294,17 @@ server <- function(input, output) {
         d3heatmap(rawDF %>% select(input$selectedVariables), 
                   scale = "none",
                   dendrogram = 'row',
-                  labRow = Names,
+                  labRow = pt.names,
                   color = c('#a1d99b', '#fc9272'),
                   k_row = input$clusters)
+    })
+    
+    output$hex_plot <- renderPlot({
+        ggplot(data = rawDF, aes(x=i, y=j, fill=weightRank))+
+            geom_hex(stat='identity')+
+            scale_fill_gradientn(colours = ColRamp)+
+            theme_bw()+
+            coord_flip()
     })
 }
 
