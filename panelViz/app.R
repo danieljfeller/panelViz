@@ -160,7 +160,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                     
                     sidebarPanel(width = 2,
                                  # add sidebarPanel,
-                                 sortableCheckboxGroupInput("selectedVariables", "Indicators",
+                                 sortableCheckboxGroupInput("selectedVariables", "Prioritization Criteria",
                                                             choices = variables,
                                                             selected = c('VLS', 'etohAbuse', 'hospitalizationRisk')),
                                  selectInput("sortMethod", "Sorting Method:",
@@ -310,7 +310,7 @@ server <- function(input, output) {
         
         print(
             ggplotly(
-            ggplot(data = df, aes(x=i, y=j, fill = weightRank))+
+            ggplot(data = df, aes(x=i, y=j, text = paste("Name:", Name), fill = weightRank))+
             geom_hex(stat='identity')+
             scale_fill_gradientn(colours = ColRamp)+
             theme_bw()+
