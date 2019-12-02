@@ -83,6 +83,7 @@ df <- read.csv('synthetic_patients.csv') %>%
            HTN = toFactor(HTN),
            behavioralDx = toFactor(behavioralDx),
            hospitalizationRisk = round(hospitalizationRisk, digits = 2))
+df <- df[!duplicated(df),]
 
 variables = colnames(df)[-c(1)]
 variablesNamed <- c('Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuser', 'Lost to Care', 'CD4+ count', 'HbA1c measurement',
@@ -106,7 +107,6 @@ for (row in 1:22){
         counter <- counter + 1
         df[df$rank == counter,]$i <- row
         df[df$rank == counter,]$j <- column + offset
-        print(paste(counter, row, column + offset))
     }
 }
 
@@ -207,10 +207,11 @@ server <- function(input, output) {
         riskSelection <- 'hospitalizationRisk' %in% input$selectedVariables
         hbac1Selection <- 'HbA1c' %in% input$selectedVariables
         
-        # get weights for each column
+        # get MAGIQ score (rankings) for each patient
         raw_df <- read.csv('synthetic_patients.csv')
-        raw_df$weightRank <- computeWeightedSum(raw_df,
-                           input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables])$VLS
+        ordered_selected_Variables <- input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables]
+        MAGIQscore <- computeWeightedSum(raw_df, ordered_selected_Variables)
+        raw_df$weightRank <- MAGIQscore[,1]
         
         # get quantiles for patient rank
         patient_brks <- quantile(as.numeric(row.names(df)), probs = seq(0, 1, .01))
@@ -223,15 +224,15 @@ server <- function(input, output) {
             # don't sort data
             if (input$sortMethod == 'noSort'){
                 df %>% 
-                select(c('Name', input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables])) %>%
+                select(c('Name', ordered_selected_Variables)) %>%
                     tibble::rownames_to_column()
             }
             # sort data deterministicly
             else if (input$sortMethod == 'hardSort') {
                 df %>%  
-                select(c('Name', input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables])) %>% 
+                select(c('Name', ordered_selected_Variables)) %>% 
                 arrange_at(
-                    input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables],
+                    ordered_selected_Variables,
                     desc) %>%
                     tibble::rownames_to_column()
             }
@@ -239,7 +240,7 @@ server <- function(input, output) {
             else {
                 merge(df, raw_df[c('Name', 'weightRank')], by = 'Name') %>% 
                     arrange(desc(weightRank)) %>%
-                    select(c('Name', input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables])) %>%
+                    select(c('Name', ordered_selected_Variables)) %>%
                     tibble::rownames_to_column()
         },
         
@@ -300,7 +301,7 @@ server <- function(input, output) {
     })
     
     output$hex_plot <- renderPlot({
-        ggplot(data = rawDF, aes(x=i, y=j, fill=weightRank))+
+        ggplot(data = df, aes(x=i, y=j, fill = hospitalizationRisk))+
             geom_hex(stat='identity')+
             scale_fill_gradientn(colours = ColRamp)+
             theme_bw()+
