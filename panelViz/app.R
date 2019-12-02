@@ -167,8 +167,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                              c("No Sorting" = 'noSort',
                                                "Hard Sorting" = "hardSort",
                                                "Weighted Sorting" = "weightedSort"),
-                                             selected = 'weightedSort'),
-                                 checkboxInput("rankRows", "Visualize Patient Rank", value = TRUE)
+                                             selected = 'weightedSort')
                     ),
                     
                     #######################
@@ -287,7 +286,7 @@ server <- function(input, output) {
                         fontWeight = 'bold') %>%
             
             # add color to patient names
-            formatStyle(ifelse(input$rankRows == TRUE, 'Name', 'rowname'), 'rowname', 
+            formatStyle('Name','rowname', 
                         backgroundColor = styleInterval(patient_brks, patientColors), 
                         color = 'white',
                         fontWeight = 'bold')
@@ -303,9 +302,15 @@ server <- function(input, output) {
     })
     
     output$hex_plot <- renderPlotly({
+        
+        # get MAGIQ score (rankings) for each patient
+        ordered_selected_Variables <- input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables]
+        MAGIQscore <- computeWeightedSum(df, ordered_selected_Variables)
+        df$weightRank <- MAGIQscore[,1]
+        
         print(
             ggplotly(
-            ggplot(data = df, aes(x=i, y=j, fill = hospitalizationRisk))+
+            ggplot(data = df, aes(x=i, y=j, fill = weightRank))+
             geom_hex(stat='identity')+
             scale_fill_gradientn(colours = ColRamp)+
             theme_bw()+
