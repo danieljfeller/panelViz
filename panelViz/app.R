@@ -77,6 +77,7 @@ pt.names <- rawDF$Name
 
 df <- read.csv('synthetic_patients.csv') %>%
     mutate(VLS = toFactor(VLS),
+           DM = toFactor(DM),
            drugAbuse =toFactor(drugAbuse), 
            etohAbuse = toFactor(etohAbuse),
            LTFU = toFactor(LTFU),
@@ -85,12 +86,13 @@ df <- read.csv('synthetic_patients.csv') %>%
            NewDx = toFactor(NewDx),
            HCV = toFactor(HCV),
            HTN = toFactor(HTN),
-           behavioralDx = toFactor(behavioralDx),
+           MentalHealth = toFactor(MentalHealth),
            hospitalizationRisk = round(hospitalizationRisk, digits = 2))
 df <- df[!duplicated(df),]
+names(df)
 
-variables = colnames(df)[-c(1)]
-variablesNamed <- c('Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuser', 'Lost to Care', 'CD4+ count', 'HbA1c measurement',
+variables = colnames(df)[-c(1,16)]
+variablesNamed <- c('Viral Load', 'Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuse', 'Lost to Care', 'CD4+ count', 'Diabetes',
                     'Unstable Housing', 'Recent Missed Appointment', 'Newly Diagnosed HIV', 'Active HCV', 'High Cost Patient', 'Unmanaged Hypertension',
                     'Mental Health Disorder')
 
@@ -143,7 +145,6 @@ ColRamp <- rev(designer.colors(n=10, col=brewer.pal(9, "Spectral")))
 cd4_brks <- quantile(df$CD4, probs = seq(.05, .95, .10), na.rm = TRUE)
 hosp_risk_brks <- quantile(df$hospitalizationRisk, probs = seq(.05, .95, .10), na.rm = TRUE)
 cost_brks <- quantile(df$Cost, probs = seq(.05, .95, .10), na.rm = TRUE)
-hba1c_brks <- quantile(df$HbA1c, probs = seq(.05, .95, .10), na.rm = TRUE)
 
 #############
 # create UI #
@@ -205,14 +206,13 @@ server <- function(input, output) {
     output$patientDF = DT::renderDT(server=FALSE,{
         
         # retrieve only those columns in selection
-        BinarySelection <- c('VLS', 'drugAbuse', 'etohAbuse', 'LTFU',
+        BinarySelection <- c('VLS', 'drugAbuse', 'etohAbuse', 'LTFU', 'DM',
                              'UnstableHousing', 'MissedApt', 'NewDx', 'HCV',
-                             'HTN', 'behavioralDx') %in% input$selectedVariables
+                             'HTN', 'MentalHealth') %in% input$selectedVariables
         cd4Selection <- 'CD4' %in% input$selectedVariables
         costSelection <- 'Cost' %in% input$selectedVariables
         riskSelection <- 'hospitalizationRisk' %in% input$selectedVariables
-        hbac1Selection <- 'HbA1c' %in% input$selectedVariables
-        
+
         # get MAGIQ score (rankings) for each patient
         raw_df <- read.csv('synthetic_patients.csv')
         ordered_selected_Variables <- input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables]
@@ -265,9 +265,9 @@ server <- function(input, output) {
                            rowReorder = TRUE)) %>%
             
             # add color to binary variables 
-            formatStyle(c('VLS', 'drugAbuse', 'etohAbuse', 'LTFU',
+            formatStyle(c('VLS', 'drugAbuse', 'etohAbuse', 'LTFU', 'DM',
                           'UnstableHousing', 'MissedApt', 'NewDx', 'HCV',
-                          'HTN', 'behavioralDx')[BinarySelection], 
+                          'HTN', 'MentalHealth')[BinarySelection], 
                         backgroundColor = styleEqual(c('No', 'Yes'), c('#a1d99b', '#fc9272')), 
                         color = 'white',
                         fontWeight = 'bold') %>%
@@ -283,10 +283,6 @@ server <- function(input, output) {
                         fontWeight = 'bold') %>%
             formatStyle(c('Cost')[costSelection], 
                         backgroundColor = styleInterval(cost_brks, gradientColors), 
-                        color = 'white',
-                        fontWeight = 'bold') %>%
-            formatStyle(c('HbA1c')[hbac1Selection], 
-                        backgroundColor = styleInterval(hba1c_brks, gradientColors), 
                         color = 'white',
                         fontWeight = 'bold') %>%
             
