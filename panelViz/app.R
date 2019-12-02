@@ -3,6 +3,10 @@ library(DT)
 library(shinythemes)
 library(dplyr)
 library(d3heatmap)
+library(ggplot2)
+library(plotly)
+library(fields)
+library(RColorBrewer)
 
 ####################
 # define functions #
@@ -133,6 +137,8 @@ patientColors <- c('#fc9272', '#fa9473', '#f89574', '#f69775', '#f49876', '#f29a
 gradientColors <- c('#a1d99b', '#aed397', '#b9cc93', '#c4c68e', '#cdbf8a', 
                     '#d6b986', '#dfb182', '#e7aa7e', '#eea27a', '#f59a76', '#fc9272')
 
+ColRamp <- rev(designer.colors(n=10, col=brewer.pal(9, "Spectral")))
+
 # quantiles for all numeric variables
 cd4_brks <- quantile(df$CD4, probs = seq(.05, .95, .10), na.rm = TRUE)
 hosp_risk_brks <- quantile(df$hospitalizationRisk, probs = seq(.05, .95, .10), na.rm = TRUE)
@@ -171,7 +177,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                     mainPanel(
                         tabsetPanel(
                             tabPanel("Overview", 
-                                     plotOutput("hex_plot")),
+                                     plotlyOutput("hex_plot")),
                             tabPanel("Rank", 
                                      DT::dataTableOutput("patientDF")),
                             tabPanel("Group", 
@@ -300,12 +306,17 @@ server <- function(input, output) {
                   k_row = input$clusters)
     })
     
-    output$hex_plot <- renderPlot({
-        ggplot(data = df, aes(x=i, y=j, fill = hospitalizationRisk))+
+    output$hex_plot <- renderPlotly({
+        print(
+            ggplotly(
+            ggplot(data = df, aes(x=i, y=j, fill = hospitalizationRisk))+
             geom_hex(stat='identity')+
             scale_fill_gradientn(colours = ColRamp)+
             theme_bw()+
+            #theme(aspect.ratio = 0.5)+
             coord_flip()
+            )
+        )
     })
 }
 

@@ -4,6 +4,11 @@ library(shinythemes)
 library(dplyr)
 library(d3heatmap)
 library(ggplot2)
+library(fields)
+library(RColorBrewer)
+library(plotly)
+library(cairo)
+
 
 # convert logical vector to character
 toFactor <- function(x){
@@ -46,9 +51,8 @@ for (row in 1:23){
 
 # get some colors
 ColRamp <- rev(designer.colors(n=10, col=brewer.pal(9, "Spectral")))
-
 # plot the hex bins
-ggplot(data = df, aes(x=i, y=j, fill=hospitalizationRisk))+
+p <- ggplot(data = df, aes(x=i, y=j, fill=hospitalizationRisk))+
   geom_hex(stat='identity')+
   scale_fill_gradientn(colours = ColRamp)+
   theme_bw()+
@@ -56,9 +60,6 @@ ggplot(data = df, aes(x=i, y=j, fill=hospitalizationRisk))+
 
 ggplotly(p)
 
-
-d <- ggplot(data = df, aes(x=i, y=j, z=rank))
-d + stat_summary_hex(fun=sum)
 
 ###########
 # heatmap #
