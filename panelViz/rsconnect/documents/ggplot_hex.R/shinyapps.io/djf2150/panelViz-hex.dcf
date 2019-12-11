@@ -1,0 +1,13 @@
+name: panelViz-hex
+title: panelViz-hex
+username:
+account: djf2150
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1587647
+bundleId: 2657689
+url: https://djf2150.shinyapps.io/panelViz-hex/
+when: 1576031677.66292
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|app.R|hex.R|Rplot.png|test.R|test2.R|src/custom_heatmap.R|src/heatmap_experiments.R

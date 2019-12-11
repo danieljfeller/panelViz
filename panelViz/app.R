@@ -7,6 +7,7 @@ library(ggplot2)
 library(plotly)
 library(fields)
 library(RColorBrewer)
+library(sortable)
 
 ####################
 # define functions #
@@ -153,23 +154,7 @@ cost_brks <- quantile(df$Cost, probs = seq(.05, .95, .10), na.rm = TRUE)
 ui <- fluidPage(theme = shinytheme("sandstone"),
                 
                 sidebarLayout(
-                    
-                    #######################
-                    # interaction widgets #
-                    #######################
-                    
-                    sidebarPanel(width = 2,
-                                 # add sidebarPanel,
-                                 sortableCheckboxGroupInput("selectedVariables", "Prioritization Criteria",
-                                                            choices = variables,
-                                                            selected = c('VLS', 'etohAbuse', 'hospitalizationRisk')),
-                                 selectInput("sortMethod", "Sorting Method:",
-                                             c("No Sorting" = 'noSort',
-                                               "Hard Sorting" = "hardSort",
-                                               "Weighted Sorting" = "weightedSort"),
-                                             selected = 'weightedSort')
-                    ),
-                    
+    
                     #######################
                     # table visualization #
                     #######################
@@ -177,7 +162,8 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                     mainPanel(
                         tabsetPanel(
                             tabPanel("Overview", 
-                                     plotlyOutput("hex_plot")),
+                                     plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0),
+                                     uiOutput("dynamic")),
                             tabPanel("Rank", 
                                      DT::dataTableOutput("patientDF")),
                             tabPanel("Group", 
@@ -191,6 +177,33 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                                               width = 800)
                                      )
                     )
+                ),
+                #######################
+                # interaction widgets #
+                #######################
+                
+                sidebarPanel(width = 4,
+                             # add sidebarPanel,
+                             bucket_list(
+                                 header = "Select High-Risk Criteria",
+                                 group_name = "bucket_list_group",
+                                 orientation = "vertical",
+                                 add_rank_list(
+                                     text = "Prioritization Criteria",
+                                     labels = c("VLS", "hospitalizationRisk"),
+                                     input_id = "selected"
+                                 ),
+                                 add_rank_list(
+                                     text = 'Select & Drag Variables',
+                                     labels = variables[variables != 'VLS' & variables != 'hospitalizationRisk'],
+                                     input_id = "unselected"
+                                 )
+                             ),
+                             selectInput("sortMethod", "Sorting Method:",
+                                         c("No Sorting" = 'noSort',
+                                           "Hard Sorting" = "hardSort",
+                                           "Weighted Sorting" = "weightedSort"),
+                                         selected = 'weightedSort')
                 )
     )
 )
@@ -201,21 +214,32 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
 
 server <- function(input, output) {
     
+    ####################
+    # get updated data #
+    ####################
+    
+    newData <- reactive({
+        # get MAGIQ score (rankings) for each patient
+        ordered_selected_Variables <- input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables]
+        MAGIQscore <- computeWeightedSum(df, ordered_selected_Variables)
+        df$weightRank <- MAGIQscore[,1]
+        print(df)
+    })
+    
     # data table
     output$patientDF = DT::renderDT(server=FALSE,{
         
         # retrieve only those columns in selection
         BinarySelection <- c('VLS', 'drugAbuse', 'etohAbuse', 'LTFU', 'DM',
                              'UnstableHousing', 'MissedApt', 'NewDx', 'HCV',
-                             'HTN', 'MentalHealth') %in% input$selectedVariables
-        cd4Selection <- 'CD4' %in% input$selectedVariables
-        costSelection <- 'Cost' %in% input$selectedVariables
-        riskSelection <- 'hospitalizationRisk' %in% input$selectedVariables
+                             'HTN', 'MentalHealth') %in% input$selected
+        cd4Selection <- 'CD4' %in% input$selected
+        costSelection <- 'Cost' %in% input$selected
+        riskSelection <- 'hospitalizationRisk' %in% input$selected
 
         # get MAGIQ score (rankings) for each patient
         raw_df <- read.csv('synthetic_patients.csv')
-        ordered_selected_Variables <- input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables]
-        MAGIQscore <- computeWeightedSum(raw_df, ordered_selected_Variables)
+        MAGIQscore <- computeWeightedSum(raw_df, input$selected)
         raw_df$weightRank <- MAGIQscore[,1]
         
         # get quantiles for patient rank
@@ -229,15 +253,15 @@ server <- function(input, output) {
             # don't sort data
             if (input$sortMethod == 'noSort'){
                 df %>% 
-                select(c('Name', ordered_selected_Variables)) %>%
+                select(c('Name', input$selected)) %>%
                     tibble::rownames_to_column()
             }
             # sort data deterministicly
             else if (input$sortMethod == 'hardSort') {
                 df %>%  
-                select(c('Name', ordered_selected_Variables)) %>% 
+                select(c('Name', input$selected)) %>% 
                 arrange_at(
-                    ordered_selected_Variables,
+                    input$selected,
                     desc) %>%
                     tibble::rownames_to_column()
             }
@@ -245,7 +269,7 @@ server <- function(input, output) {
             else {
                 merge(df, raw_df[c('Name', 'weightRank')], by = 'Name') %>% 
                     arrange(desc(weightRank)) %>%
-                    select(c('Name', ordered_selected_Variables)) %>%
+                    select(c('Name', input$selected)) %>%
                     tibble::rownames_to_column()
         },
         
@@ -292,6 +316,10 @@ server <- function(input, output) {
                         fontWeight = 'bold')
     })
     
+    ###########
+    # heatmap #
+    ###########
+    
     output$heatmap <- renderD3heatmap({
         d3heatmap(rawDF %>% select(input$selectedVariables), 
                   scale = "none",
@@ -301,23 +329,34 @@ server <- function(input, output) {
                   k_row = input$clusters)
     })
     
-    output$hex_plot <- renderPlotly({
+    #############
+    # hex plot #
+    ############
+    
+    output$hex_plot <- renderPlot({
         
         # get MAGIQ score (rankings) for each patient
-        ordered_selected_Variables <- input$selectedVariables_order[input$selectedVariables_order %in% input$selectedVariables]
-        MAGIQscore <- computeWeightedSum(df, ordered_selected_Variables)
+        MAGIQscore <- computeWeightedSum(df, input$selected)
         df$weightRank <- MAGIQscore[,1]
-        
-        print(
-            ggplotly(
-            ggplot(data = df, aes(x=i, y=j, text = paste("Name:", Name), fill = weightRank))+
+
+        ggplot(data = df, aes(x=i, y=j, fill = weightRank))+
             geom_hex(stat='identity')+
             scale_fill_gradientn(colours = ColRamp)+
             theme_bw()+
-            #theme(aspect.ratio = 0.5)+
+            theme(aspect.ratio = 0.5)+
             coord_flip()
-            )
-        )
+        })
+    
+    output$dynamic <- renderUI({
+        req(input$plot_hover) 
+        verbatimTextOutput("vals")
+    })
+    
+    output$vals <- renderPrint({
+        hover <- input$plot_hover 
+        # print(str(hover)) # list
+        y <- nearPoints(df, hover, threshold = 10)
+        y
     })
 }
 
