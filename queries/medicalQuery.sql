@@ -1,0 +1,6 @@
+-- Viral load suppression
+-- CD4+ cell count
+-- Active chronic hepatitis C
+-- unmanaged diabetes mellitus
+-- Hypertension
+-- BMI
