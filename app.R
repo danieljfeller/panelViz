@@ -73,10 +73,10 @@ formatSort <- function(selectedOrder){
 ######################
 # load & format data #
 ######################
-rawDF <- read.csv('synthetic_patients.csv')[1:500,]
+rawDF <- read.csv('data/synthetic_patients.csv')[1:500,]
 pt.names <- rawDF$Name
 
-df <- read.csv('synthetic_patients.csv') %>%
+df <- read.csv('data/synthetic_patients.csv') %>%
     mutate(VLS = toFactor(VLS),
            DM = toFactor(DM),
            drugAbuse =toFactor(drugAbuse), 
@@ -321,7 +321,7 @@ server <- function(input, output) {
     ###########
     
     output$heatmap <- renderD3heatmap({
-        d3heatmap(rawDF %>% select(input$selectedVariables), 
+        d3heatmap(rawDF %>% select(input$selected), 
                   scale = "none",
                   dendrogram = 'row',
                   labRow = pt.names,
