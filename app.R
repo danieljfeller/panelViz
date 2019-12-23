@@ -162,7 +162,8 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                         tabsetPanel(
                             tabPanel("Overview", 
                                      plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0),
-                                     htmlOutput("dynamic")),
+                                     htmlOutput("dynamicName"),
+                                     htmlOutput("dynamicVals")),
                             tabPanel("Rank", 
                                      DT::dataTableOutput("patientDF")),
                             tabPanel("Group", 
@@ -347,20 +348,39 @@ server <- function(input, output) {
         })
     
     # retrieve values to be reactively presented in UI
+    output$name <- renderPrint({
+        # retrieve coordinates from user's cursor
+        hover <- input$plot_hover 
+        # returns row from dataframe hover coordinators
+        name <- nearPoints(df, hover, threshold = 10)$Name[[1]]
+        # print name
+        cat(sprintf("<b> %s</b>",name))
+            })
+    
+    # renders reactive output variable 
+    output$dynamicName <- renderUI({
+        # only proceed if mouse coordinates exist
+        req(input$plot_hover) 
+        htmlOutput("name", inline = TRUE)
+    })
+    
+    # retrieve values to be reactively presented in UI
     output$vals <- renderPrint({
         # retrieve coordinates from user's cursor
         hover <- input$plot_hover 
         # returns row from dataframe hover coordinators
-        df <- nearPoints(df, hover, threshold = 10)
-        c('')
-        print(df)
+        df <- nearPoints(df, hover, threshold = 10) %>% select(c('Name', input$selected))
+        # print variables
+        for (colIndex in 2:ncol(df)){
+            cat(sprintf("<b>%s:</b> %s<br>", names(df)[colIndex], df[1,colIndex]))
+        }
     })
     
-    # renders reactive output variable 
-    output$dynamic <- renderUI({
+    # renders reactive output variables
+    output$dynamicVals <- renderUI({
         # only proceed if mouse coordinates exist
         req(input$plot_hover) 
-        verbatimTextOutput("vals")
+        htmlOutput("vals", inline = TRUE)
     })
 }
 
