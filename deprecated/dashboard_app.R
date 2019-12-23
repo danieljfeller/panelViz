@@ -9,8 +9,8 @@ dashboardSidebar(
     menuItem("My Panel Overview", tabName = "hexplot", icon = icon("globe")),
     menuItem("My Care Gaps", tabName = "table", icon = icon("exclamation-circle"))),
   # prioritization criteria
-  sidebarInput(
-                 bucket_list(
+    menuItem(
+                   bucket_list(
                    header = "Select High-Risk Criteria",
                    group_name = "bucket_list_group",
                    orientation = "vertical",
@@ -57,21 +57,10 @@ dashboardBody(
 )
 
 
-mainPanel(
-  tabsetPanel(
-    tabPanel("Overview", 
-             plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0),
-             uiOutput("dynamic")),
-    tabPanel("Rank", 
-             DT::dataTableOutput("patientDF")),
-    tabPanel("Group", 
-             sliderInput("clusters",
-                         label = "Clusters",
-                         min = 1,
-                         max = 25,
-                         value = 9),
-             d3heatmapOutput("heatmap",
-                             height = 600,
-                             width = 800)
-    )
-  )
+server <- function(input, output, session){
+  
+  
+  
+}
+
+shinyApp(ui, server)

@@ -163,7 +163,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                         tabsetPanel(
                             tabPanel("Overview", 
                                      plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0),
-                                     uiOutput("dynamic")),
+                                     htmlOutput("dynamic")),
                             tabPanel("Rank", 
                                      DT::dataTableOutput("patientDF")),
                             tabPanel("Group", 
@@ -238,7 +238,7 @@ server <- function(input, output) {
         riskSelection <- 'hospitalizationRisk' %in% input$selected
 
         # get MAGIQ score (rankings) for each patient
-        raw_df <- read.csv('synthetic_patients.csv')
+        raw_df <- read.csv('data/synthetic_patients.csv')
         MAGIQscore <- computeWeightedSum(raw_df, input$selected)
         raw_df$weightRank <- MAGIQscore[,1]
         
@@ -347,16 +347,21 @@ server <- function(input, output) {
             coord_flip()
         })
     
-    output$dynamic <- renderUI({
-        req(input$plot_hover) 
-        verbatimTextOutput("vals")
+    # retrieve values to be reactively presented in UI
+    output$vals <- renderPrint({
+        # retrieve coordinates from user's cursor
+        hover <- input$plot_hover 
+        # returns row from dataframe hover coordinators
+        df <- nearPoints(df, hover, threshold = 10)
+        c('')
+        print(df)
     })
     
-    output$vals <- renderPrint({
-        hover <- input$plot_hover 
-        # print(str(hover)) # list
-        y <- nearPoints(df, hover, threshold = 10)
-        y
+    # renders reactive output variable 
+    output$dynamic <- renderUI({
+        # only proceed if mouse coordinates exist
+        req(input$plot_hover) 
+        verbatimTextOutput("vals")
     })
 }
 
