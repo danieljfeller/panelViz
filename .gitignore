@@ -1,8 +1,4 @@
-# Don't track content of these folders
-Data/
-
-# files
-*.csv
+/data/raw
 
 # Compiled source #
 ###################

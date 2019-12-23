@@ -76,7 +76,7 @@ formatSort <- function(selectedOrder){
 rawDF <- read.csv('data/synthetic_patients.csv')[1:500,]
 pt.names <- rawDF$Name
 
-df <- read.csv('data/synthetic_patients.csv') %>%
+df <- read.csv('data/synthetic_patients.csv', fill = TRUE) %>%
     mutate(VLS = toFactor(VLS),
            DM = toFactor(DM),
            drugAbuse =toFactor(drugAbuse), 
@@ -90,7 +90,6 @@ df <- read.csv('data/synthetic_patients.csv') %>%
            MentalHealth = toFactor(MentalHealth),
            hospitalizationRisk = round(hospitalizationRisk, digits = 2))
 df <- df[!duplicated(df),]
-names(df)
 
 variables = colnames(df)[-c(1,16)]
 variablesNamed <- c('Viral Load', 'Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuse', 'Lost to Care', 'CD4+ count', 'Diabetes',
@@ -283,7 +282,7 @@ server <- function(input, output) {
             selection = 'none',
             autoHideNavigation = TRUE,
             options = list(fixedHeader = TRUE,
-                           pageLength = 100,
+                           pageLength = 500,
                            columnDefs = list(list(visible=FALSE, targets=c(0))),
                            rowReorder = TRUE)) %>%
             
