@@ -1,0 +1,13 @@
+name: panelViz
+title: panelViz
+username:
+account: djf2150
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1149381
+bundleId: 2688812
+url: https://djf2150.shinyapps.io/panelViz/
+when: 1577148207.75019
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|README.md|data/.ipynb_checkpoints/OHDSI dataset creation-checkpoint.ipynb|deprecated/dashboard_app.R|deprecated/dashboard_ui.R|notebooks/OHDSIdataset.ipynb|queries/behavioralQuery.sql|queries/medicalQuery.sql|queries/socialQuery.sql|queries/visitQuery.sql
