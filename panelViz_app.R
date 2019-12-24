@@ -150,6 +150,7 @@ cost_brks <- quantile(df$Cost, probs = seq(.05, .95, .10), na.rm = TRUE)
 # create UI #
 #############
 
+
 ui <- fluidPage(theme = shinytheme("sandstone"),
                 
                 sidebarLayout(

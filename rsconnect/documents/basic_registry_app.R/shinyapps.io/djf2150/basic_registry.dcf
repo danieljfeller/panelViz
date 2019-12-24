@@ -1,0 +1,13 @@
+name: basic_registry
+title: basic_registry
+username:
+account: djf2150
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1618290
+bundleId: 2690194
+url: https://djf2150.shinyapps.io/basic_registry/
+when: 1577228094.09436
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|panelViz_app.R|README.md|data/.ipynb_checkpoints/OHDSI dataset creation-checkpoint.ipynb|deprecated/dashboard_app.R|deprecated/dashboard_ui.R|notebooks/OHDSIdataset.ipynb|queries/behavioralQuery.sql|queries/medicalQuery.sql|queries/socialQuery.sql|queries/visitQuery.sql
