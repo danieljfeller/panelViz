@@ -68,9 +68,9 @@ ui <- fluidPage(
     # Sidebar panel for inputs ----
     sidebarPanel(
       # Input: Slider for the number of bins ----
-      checkboxGroupInput("selected_variables", label = h3("Select Care Gaps"), 
-                         choices = variablesNamed,
-                         selected = c('Viral Load', 'Risk of Hospitalization'))),
+      sortableCheckboxGroupInput("selected_variables", label = h3("Select Care Gaps"), 
+                         choices = names(df)[2:length(names(df))],
+                         selected = c('Viral Load'))),
     # Main panel for displaying outputs ----
     mainPanel(
       # Output: interactive table
@@ -83,22 +83,28 @@ ui <- fluidPage(
 # create server #
 #################
 
-server <- function(input, output) {
+server <- function(input, output){
   
   ####################
   # get updated data #
   ####################
   
-  
   # data table
-  output$patientDF = DT::renderDT(
+  output$patientDF = DT::renderDT(server=FALSE,{
 
+    ordered_selected_variables <- input$selected_variables_order[input$selected_variables_order %in% input$selected_variables]
+    
     #########################
     # select sorting method #
     #########################
     
     DT::datatable( 
-      data = df %>% select(c('Name', input$selected_variable)) %>% tibble::rownames_to_column(),
+      data = df %>% 
+        select(c('Name', input$selected_variables)) %>% 
+        arrange_at(
+          ordered_selected_variables,
+          desc) %>%
+        tibble::rownames_to_column(),
       rownames = FALSE, 
       extensions = 'RowReorder',
       selection = 'none',
@@ -107,7 +113,7 @@ server <- function(input, output) {
                      pageLength = 500,
                      columnDefs = list(list(visible=FALSE, targets=c(0))),
                      rowReorder = TRUE))
-  )
+  })
 }
   
 #####################
