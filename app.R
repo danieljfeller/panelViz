@@ -153,11 +153,9 @@ cost_brks <- quantile(df$Cost, probs = seq(.05, .95, .10), na.rm = TRUE)
 ui <- fluidPage(theme = shinytheme("sandstone"),
                 
                 sidebarLayout(
-    
                     #######################
                     # table visualization #
                     #######################
-                    
                     mainPanel(
                         tabsetPanel(
                             tabPanel("Overview", 
@@ -354,7 +352,8 @@ server <- function(input, output) {
         # returns row from dataframe hover coordinators
         name <- nearPoints(df, hover, threshold = 10)$Name[[1]]
         # print name
-        cat(sprintf("<b> %s</b>",name))
+        
+        cat(sprintf("<b><font size=6>%s</b>",name))
             })
     
     # renders reactive output variable 
@@ -372,7 +371,7 @@ server <- function(input, output) {
         df <- nearPoints(df, hover, threshold = 10) %>% select(c('Name', input$selected))
         # print variables
         for (colIndex in 2:ncol(df)){
-            cat(sprintf("<b>%s:</b> %s<br>", names(df)[colIndex], df[1,colIndex]))
+            cat(sprintf("<b><font size=4>%s:</b> <font size=4>%s<br>", names(df)[colIndex], df[1,colIndex]))
         }
     })
     
