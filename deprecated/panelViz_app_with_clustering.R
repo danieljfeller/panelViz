@@ -164,9 +164,19 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                      htmlOutput("dynamicName"),
                                      htmlOutput("dynamicVals")),
                             tabPanel("Rank", 
-                                     DT::dataTableOutput("patientDF"))
+                                     DT::dataTableOutput("patientDF")),
+                            tabPanel("Group", 
+                                     sliderInput("clusters",
+                                                 label = "Clusters",
+                                                 min = 1,
+                                                 max = 25,
+                                                 value = 9),
+                                     d3heatmapOutput("heatmap",
+                                                              height = 600,
+                                                              width = 800)
                                      )
-                    ),
+                    )
+                ),
                 #######################
                 # interaction widgets #
                 #######################
@@ -194,7 +204,8 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                            "Weighted Sorting" = "weightedSort"),
                                          selected = 'weightedSort')
                 )
-))
+    )
+)
 
 ##################
 # create server #
@@ -302,6 +313,19 @@ server <- function(input, output) {
                         backgroundColor = styleInterval(patient_brks, patientColors), 
                         color = 'white',
                         fontWeight = 'bold')
+    })
+    
+    ###########
+    # heatmap #
+    ###########
+    
+    output$heatmap <- renderD3heatmap({
+        d3heatmap(rawDF %>% select(input$selected), 
+                  scale = "none",
+                  dendrogram = 'row',
+                  labRow = pt.names,
+                  color = c('#a1d99b', '#fc9272'),
+                  k_row = input$clusters)
     })
     
     #############
