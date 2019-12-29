@@ -8,6 +8,8 @@ library(plotly)
 library(fields)
 library(RColorBrewer)
 library(sortable)
+library(shinydashboard)
+library(shinyWidgets)
 
 ####################
 # define functions #
@@ -153,48 +155,61 @@ cost_brks <- quantile(df$Cost, probs = seq(.05, .95, .10), na.rm = TRUE)
 
 ui <- fluidPage(theme = shinytheme("sandstone"),
                 
-                sidebarLayout(
+                fluidRow(
+                    
                     #######################
                     # table visualization #
                     #######################
-                    mainPanel(
                         tabsetPanel(
-                            tabPanel("Overview", 
-                                     plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0),
-                                     htmlOutput("dynamicName"),
-                                     htmlOutput("dynamicVals")),
+                            tabPanel("Overview",
+                                     column(width = 10,
+                                     # user-controlled prioritization
+                                     dropdownButton(
+                                         
+                                         # select prioritization criteria
+                                         bucket_list(
+                                             header = "High-Risk Criteria",
+                                             group_name = "bucket_list_group",
+                                             orientation = "vertical",
+                                             add_rank_list(
+                                                 text = "Selected",
+                                                 labels = c("VLS", "hospitalizationRisk"),
+                                                 input_id = "selected"
+                                             ),
+                                             add_rank_list(
+                                                 text = 'Not Selected',
+                                                 labels = variables[variables != 'VLS' & variables != 'hospitalizationRisk'],
+                                                 input_id = "unselected"
+                                             )
+                                         ),
+                                         
+                                         # select sorting method
+                                         selectInput("sortMethod", "Sorting Method:",
+                                                     c("No Sorting" = 'noSort',
+                                                       "Hard Sorting" = "hardSort",
+                                                       "Weighted Sorting" = "weightedSort"),
+                                                     selected = 'weightedSort'),
+                                         
+                                         icon = icon("sort"), width = "300px",
+                                         tooltip = tooltipOptions(title = "Click to edit prioritization criteria")
+                                     ),
+                                     
+                                     # hexagon plot
+                                     plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0)),
+                                
+                                     # patient information
+                                     column(width = 2,
+                                            useShinydashboard()
+                                            htmlOutput("dynamicName"),
+                                            htmlOutput("dynamicVals"))),
+                            
+                            #########################
+                            # tabular visualization #
+                            #########################
+                            
                             tabPanel("Rank", 
-                                     DT::dataTableOutput("patientDF"))
-                                     )
-                    ),
-                #######################
-                # interaction widgets #
-                #######################
-                
-                sidebarPanel(width = 4,
-                             # add sidebarPanel,
-                             bucket_list(
-                                 header = "Select High-Risk Criteria",
-                                 group_name = "bucket_list_group",
-                                 orientation = "vertical",
-                                 add_rank_list(
-                                     text = "Prioritization Criteria",
-                                     labels = c("VLS", "hospitalizationRisk"),
-                                     input_id = "selected"
-                                 ),
-                                 add_rank_list(
-                                     text = 'Select & Drag Variables',
-                                     labels = variables[variables != 'VLS' & variables != 'hospitalizationRisk'],
-                                     input_id = "unselected"
-                                 )
-                             ),
-                             selectInput("sortMethod", "Sorting Method:",
-                                         c("No Sorting" = 'noSort',
-                                           "Hard Sorting" = "hardSort",
-                                           "Weighted Sorting" = "weightedSort"),
-                                         selected = 'weightedSort')
-                )
-))
+                                     DT::dataTableOutput("patientDF")))))
+
 
 ##################
 # create server #
@@ -319,7 +334,9 @@ server <- function(input, output) {
             scale_fill_gradientn(colours = ColRamp)+
             theme_bw()+
             theme(aspect.ratio = 0.5)+
-            coord_flip()
+            coord_flip()+
+            theme(legend.position="left")+
+            labs(fill='Patient Priority Score') 
         })
     
     # retrieve values to be reactively presented in UI
