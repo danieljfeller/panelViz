@@ -162,7 +162,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                     #######################
                         tabsetPanel(
                             tabPanel("Overview",
-                                     column(width = 10,
+                                     column(width = 8,
                                      # user-controlled prioritization
                                      dropdownButton(
                                          
@@ -198,10 +198,15 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                      plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0)),
                                 
                                      # patient information
-                                     column(width = 2,
-                                            useShinydashboard()
-                                            htmlOutput("dynamicName"),
-                                            htmlOutput("dynamicVals"))),
+                                     column(width = 4,
+                                            useShinydashboard(),
+                                            br(),
+                                            br(),
+                                            br(),
+                                            br(),
+                                            shinydashboard::box(title = "Patient", status = "warning", solidHeader = TRUE, width = 12,
+                                                                uiOutput("dynamicName"), uiOutput("dynamicVals")),
+                                            )),
                             
                             #########################
                             # tabular visualization #
@@ -347,7 +352,7 @@ server <- function(input, output) {
         name <- nearPoints(df, hover, threshold = 10)$Name[[1]]
         # print name
         
-        cat(sprintf("<b><font size=6>%s</b>",name))
+        cat(sprintf("<b><font size=4>%s</b>",name))
             })
     
     # renders reactive output variable 
