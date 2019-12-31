@@ -156,55 +156,61 @@ cost_brks <- quantile(df$Cost, probs = seq(.05, .95, .10), na.rm = TRUE)
 ui <- fluidPage(theme = shinytheme("sandstone"),
                 
                 fluidRow(
-                    
                     #######################
                     # table visualization #
                     #######################
                         tabsetPanel(
                             tabPanel("Overview",
-                                     column(width = 8,
-                                     # user-controlled prioritization
-                                     dropdownButton(
-                                         
-                                         # select prioritization criteria
-                                         bucket_list(
-                                             header = "High-Risk Criteria",
-                                             group_name = "bucket_list_group",
-                                             orientation = "vertical",
-                                             add_rank_list(
-                                                 text = "Selected",
-                                                 labels = c("VLS", "hospitalizationRisk"),
-                                                 input_id = "selected"
-                                             ),
-                                             add_rank_list(
-                                                 text = 'Not Selected',
-                                                 labels = variables[variables != 'VLS' & variables != 'hospitalizationRisk'],
-                                                 input_id = "unselected"
-                                             )
-                                         ),
-                                         
-                                         # select sorting method
-                                         selectInput("sortMethod", "Sorting Method:",
-                                                     c("No Sorting" = 'noSort',
-                                                       "Hard Sorting" = "hardSort",
-                                                       "Weighted Sorting" = "weightedSort"),
-                                                     selected = 'weightedSort'),
-                                         
-                                         icon = icon("sort"), width = "300px",
-                                         tooltip = tooltipOptions(title = "Click to edit prioritization criteria")
-                                     ),
+                                     column(width = 2,
+                                            br(),
+                                            br(),
+                                            # user-controlled prioritization
+                                            dropdownButton(
+                                                # select prioritization criteria
+                                                bucket_list(
+                                                    header = "High-Risk Criteria",
+                                                    group_name = "bucket_list_group",
+                                                    orientation = "vertical",
+                                                    add_rank_list(
+                                                        text = "Selected",
+                                                        labels = c("VLS", "hospitalizationRisk"),
+                                                        input_id = "selected"
+                                                    ),
+                                                    add_rank_list(
+                                                        text = 'Not Selected',
+                                                        labels = variables[variables != 'VLS' & variables != 'hospitalizationRisk'],
+                                                        input_id = "unselected"
+                                                    )
+                                                ),
+                                                
+                                                # select sorting method
+                                                selectInput("sortMethod", "Sorting Method:",
+                                                            c("No Sorting" = 'noSort',
+                                                              "Hard Sorting" = "hardSort",
+                                                              "Weighted Sorting" = "weightedSort"),
+                                                            selected = 'weightedSort'),
+                                                
+                                                width = "300px",
+                                                circle = FALSE, label = "Priority Criteria",
+                                                tooltip = tooltipOptions(title = "Click to edit prioritization criteria")
+                                            )    
+                                            ),
+                                     ################
+                                     # hexagon plot #
+                                     ################
                                      
-                                     # hexagon plot
+                                     column(width = 7,
                                      plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0)),
-                                
-                                     # patient information
-                                     column(width = 4,
+                                     
+                                     #######################
+                                     # patient information #
+                                     #######################
+                                     column(width = 3,
                                             useShinydashboard(),
                                             br(),
                                             br(),
                                             br(),
-                                            br(),
-                                            shinydashboard::box(title = "Patient", status = "warning", solidHeader = TRUE, width = 12,
+                                            shinydashboard::box(status = "info",  width = 12,
                                                                 uiOutput("dynamicName"), uiOutput("dynamicVals")),
                                             )),
                             
@@ -213,7 +219,41 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                             #########################
                             
                             tabPanel("Rank", 
-                                     DT::dataTableOutput("patientDF")))))
+                                     column(width=1),
+                                     column(width=8,
+                                            DT::dataTableOutput("patientDF")),
+                                     column(width=3,
+                                            # user-controlled prioritization
+                                            dropdownButton(
+                                                # select prioritization criteria
+                                                bucket_list(
+                                                    header = "High-Risk Criteria",
+                                                    group_name = "bucket_list_group",
+                                                    orientation = "vertical",
+                                                    add_rank_list(
+                                                        text = "Selected",
+                                                        labels = c("VLS", "hospitalizationRisk"),
+                                                        input_id = "selected"
+                                                    ),
+                                                    add_rank_list(
+                                                        text = 'Not Selected',
+                                                        labels = variables[variables != 'VLS' & variables != 'hospitalizationRisk'],
+                                                        input_id = "unselected"
+                                                    )
+                                                ),
+                                                
+                                                # select sorting method
+                                                selectInput("sortMethod", "Sorting Method:",
+                                                            c("No Sorting" = 'noSort',
+                                                              "Hard Sorting" = "hardSort",
+                                                              "Weighted Sorting" = "weightedSort"),
+                                                            selected = 'weightedSort'),
+                                                
+                                                icon = icon("sort"), width = "300px",
+                                                tooltip = tooltipOptions(title = "Click to edit prioritization criteria")
+                                            ))
+                                     )
+                            )))
 
 
 ##################
@@ -341,7 +381,13 @@ server <- function(input, output) {
             theme(aspect.ratio = 0.5)+
             coord_flip()+
             theme(legend.position="left")+
-            labs(fill='Patient Priority Score') 
+            labs(fill='Patient Priority Score') +
+            theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                  axis.text.y=element_blank(),axis.ticks=element_blank(),
+                  axis.title.x=element_blank(),
+                  axis.title.y=element_blank(),legend.position="none",
+                  panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+                  panel.grid.minor=element_blank(),plot.background=element_blank())
         })
     
     # retrieve values to be reactively presented in UI
