@@ -1,4 +1,0 @@
--- Drug abuse
--- Alcohol abuse
--- Mood disorder
--- Psychotic disorder

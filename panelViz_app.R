@@ -163,7 +163,6 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                             tabPanel("Overview",
                                      column(width = 2,
                                             br(),
-                                            br(),
                                             # user-controlled prioritization
                                             dropdownButton(
                                                 # select prioritization criteria
@@ -182,14 +181,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                                         input_id = "unselected"
                                                     )
                                                 ),
-                                                
-                                                # select sorting method
-                                                selectInput("sortMethod", "Sorting Method:",
-                                                            c("No Sorting" = 'noSort',
-                                                              "Hard Sorting" = "hardSort",
-                                                              "Weighted Sorting" = "weightedSort"),
-                                                            selected = 'weightedSort'),
-                                                
+                                                # options for dropdownButton
                                                 width = "300px",
                                                 circle = FALSE, label = "Priority Criteria",
                                                 tooltip = tooltipOptions(title = "Click to edit prioritization criteria")
@@ -208,8 +200,6 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                      column(width = 3,
                                             useShinydashboard(),
                                             br(),
-                                            br(),
-                                            br(),
                                             shinydashboard::box(status = "info",  width = 12,
                                                                 uiOutput("dynamicName"), uiOutput("dynamicVals")),
                                             )),
@@ -218,11 +208,9 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                             # tabular visualization #
                             #########################
                             
-                            tabPanel("Rank", 
-                                     column(width=1),
-                                     column(width=8,
-                                            DT::dataTableOutput("patientDF")),
-                                     column(width=3,
+                            tabPanel("Registry", 
+                                     column(width=2,
+                                            br(),
                                             # user-controlled prioritization
                                             dropdownButton(
                                                 # select prioritization criteria
@@ -248,10 +236,13 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                                               "Hard Sorting" = "hardSort",
                                                               "Weighted Sorting" = "weightedSort"),
                                                             selected = 'weightedSort'),
-                                                
-                                                icon = icon("sort"), width = "300px",
+                                                # options for dropdown button
+                                                width = "300px",
+                                                circle = FALSE, label = "Priority Criteria",
                                                 tooltip = tooltipOptions(title = "Click to edit prioritization criteria")
-                                            ))
+                                            )),
+                                     column(width=10,
+                                            DT::dataTableOutput("patientDF")),
                                      )
                             )))
 
