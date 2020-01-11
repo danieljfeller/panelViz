@@ -1,4 +1,6 @@
-/data/raw
+
+
+*.csv
 
 # Compiled source #
 ###################
