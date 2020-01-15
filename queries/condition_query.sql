@@ -112,6 +112,18 @@ WHERE condition_start_date >= Convert(datetime, '2018-01-01' ) AND
                                440694,439313,434917,434627,4103426,43530681)
 
 
+-- new HIV diagnosis
+SELECT person_id
+FROM condition_occurrence
+WHERE condition_concept_id in (4241530,432554,439727)
+GROUP BY person_id
+HAVING count(*) >2 AND person_id NOT IN (
+SELECT person_id
+FROM condition_occurrence
+WHERE condition_concept_id in (4241530,432554,439727) AND
+condition_start_date < Convert(datetime, '2018-06-01'))
+
+
 
 -- CONDITIONS
 -- Active chronic hepatitis C - CONDITION
