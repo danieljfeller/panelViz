@@ -18,43 +18,53 @@ toFactor <- function(x){
   return(as.factor(ifelse(as.logical(x) == TRUE, "Yes", "No")))
 }
 
-# range standardization
-standard_range <- function(x){
-  (x-min(x))/(max(x)-min(x))
-}
-
-# converts Yes/No to 1/0
-yes2one <- function(x){
-  return(ifelse(x =='Yes', 1, 0))
-}
-
-
 
 ######################
 # load & format data #
 ######################
-rawDF <- read.csv('data/synthetic_patients.csv')[1:500,]
-pt.names <- rawDF$Name
 
-df <- read.csv('data/synthetic_patients.csv', fill = TRUE) %>%
-  mutate(VLS = toFactor(VLS),
-         DM = toFactor(DM),
-         drugAbuse =toFactor(drugAbuse), 
-         etohAbuse = toFactor(etohAbuse),
-         LTFU = toFactor(LTFU),
-         UnstableHousing = toFactor(UnstableHousing),
-         MissedApt = toFactor(MissedApt),
-         NewDx = toFactor(NewDx),
-         HCV = toFactor(HCV),
-         HTN = toFactor(HTN),
-         MentalHealth = toFactor(MentalHealth),
-         hospitalizationRisk = round(hospitalizationRisk, digits = 2))
+rawDF <- read.csv('data/ehr_dataset.csv')
+
+df <- read.csv('data/ehr_dataset.csv', fill = TRUE) %>%
+  mutate(Name = name,
+         VLS = toFactor(vls),
+         DM = toFactor(dx_diabetes),
+         DrugAbuse =toFactor(dx_alcoholism), 
+         AlcoholAbuse = toFactor(dx_drug_abuse),
+         UnstableHousing = toFactor(unstable_housing),
+         NewDx = toFactor(new_dx),
+         HCV = toFactor(dx_hcv),
+         HTN = toFactor(dx_hypertension),
+         CVD = toFactor(dx_cardiovascular.disease),
+         CKD = toFactor(dx_ckd),
+         Depression = toFactor(dx_depression),
+         Anxiety = toFactor(dx_anxiety),
+         Schizophrenia = toFactor(dx_schizophrenia),
+         OfficeVisits = office_visits,
+         ERvisits = er_visits,
+         InpatientAdmits = inpatient_admissions,
+         HbA1c = hba1c,
+         CD4count = cd4
+  )
+
+# remove duplicate patients
 df <- df[!duplicated(df),]
 
-variables = colnames(df)[-c(1,16)]
-variablesNamed <- c('Viral Load', 'Risk of Hospitalization', 'Substance Abuse', 'Alcohol Abuse', 'Lost to Care', 'CD4+ count', 'Diabetes',
-                    'Unstable Housing', 'Recent Missed Appointment', 'Newly Diagnosed HIV', 'Active HCV', 'High Cost Patient', 'Unmanaged Hypertension',
-                    'Mental Health Disorder')
+# care indiciators for the tool
+df <- df[,c('Name',"VLS","DM","DrugAbuse","AlcoholAbuse","UnstableHousing","NewDx","HCV","HTN","CVD",
+            "CKD","Depression","Anxiety","Schizophrenia","HbA1c", "CD4count", "OfficeVisits", "ERvisits", 
+            "InpatientAdmits")]
+
+# shuffle order of dataframe
+df <- df[sample(nrow(df)), ]
+
+# get all cvariable names (excluding name)
+variables = colnames(df)[-c(1:length(colnames))]
+names(variables) <- c('Virally Suppressed', 'Diabetes', 'Active Drug Use', 'Alcoholism', 'Unstable Housing', 'New HIV Diagnosis',
+                      'Chronic HCV', 'Hypertension', 'Cardiovascular Disease', 'Chronic Kidney Disease', 'Major Depression', 
+                      'Anxiety Disorder', 'Schizophrenia', 'Most recent HbA1c value', 'Most recent CD4 count', '# Office visits',
+                      '# Emergency Room visits', '# Inpatient admissions')
+
 
 #############
 # create UI #
@@ -66,13 +76,13 @@ ui <- fluidPage(
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
     # Sidebar panel for inputs ----
-    sidebarPanel(
+    sidebarPanel(width = 2,
       # Input: Slider for the number of bins ----
       sortableCheckboxGroupInput("selected_variables", label = h3("Select Care Gaps"), 
-                         choices = names(df)[2:length(names(df))],
-                         selected = c('Viral Load'))),
+                         choices = names(variables),
+                         selected = c('VLS'))),
     # Main panel for displaying outputs ----
-    mainPanel(
+    mainPanel(width = 10,
       # Output: interactive table
       DT::dataTableOutput("patientDF")
     )
@@ -93,14 +103,14 @@ server <- function(input, output){
   output$patientDF = DT::renderDT(server=FALSE,{
 
     ordered_selected_variables <- input$selected_variables_order[input$selected_variables_order %in% input$selected_variables]
-    
+    ordered_selected_variables <- variables[ordered_selected_variables]
     #########################
     # select sorting method #
     #########################
     
     DT::datatable( 
       data = df %>% 
-        select(c('Name', input$selected_variables)) %>% 
+        select(c('Name', variables[input$selected_variables])) %>% 
         arrange_at(
           ordered_selected_variables,
           desc) %>%

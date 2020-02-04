@@ -73,10 +73,10 @@ formatSort <- function(selectedOrder){
 ######################
 # load & format data #
 ######################
-rawDF <- read.csv('data/synthetic_patients.csv')[1:500,]
+rawDF <- read.csv('../data/synthetic_patients.csv')[1:500,]
 pt.names <- rawDF$Name
 
-df <- read.csv('data/synthetic_patients.csv', fill = TRUE) %>%
+df <- read.csv('../data/synthetic_patients.csv', fill = TRUE) %>%
     mutate(VLS = toFactor(VLS),
            DM = toFactor(DM),
            drugAbuse =toFactor(drugAbuse), 
@@ -237,7 +237,7 @@ server <- function(input, output) {
         riskSelection <- 'hospitalizationRisk' %in% input$selected
 
         # get MAGIQ score (rankings) for each patient
-        raw_df <- read.csv('data/synthetic_patients.csv')
+        raw_df <- read.csv('../data/synthetic_patients.csv')
         MAGIQscore <- computeWeightedSum(raw_df, input$selected)
         raw_df$weightRank <- MAGIQscore[,1]
         
@@ -247,6 +247,7 @@ server <- function(input, output) {
         #########################
         # select sorting method #
         #########################
+        print(patient_brks)
         
         DT::datatable(
             # don't sort data

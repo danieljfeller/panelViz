@@ -5,9 +5,9 @@ account: djf2150
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1618317
-bundleId: 2690239
+bundleId: 2749382
 url: https://djf2150.shinyapps.io/consolidated_registry/
-when: 1577230494.84434
+when: 1579805210.19945
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .RData|basic_registry_app.R|panelViz_app.R|README.md|data/.ipynb_checkpoints/OHDSI dataset creation-checkpoint.ipynb|deprecated/dashboard_app.R|deprecated/dashboard_ui.R|notebooks/OHDSIdataset.ipynb|queries/behavioralQuery.sql|queries/medicalQuery.sql|queries/socialQuery.sql|queries/visitQuery.sql
+ignoredFiles: .RData|basic_registry_app.R|MAGIQdatatable_viz.R|panelViz_app.R|README.md|data/synthetic_patients.csv|data/.ipynb_checkpoints/OHDSI dataset creation-checkpoint.ipynb|deprecated/dashboard_app.R|deprecated/dashboard_ui.R|deprecated/panelViz_app_with_clustering.R|notebooks/OHDSIdataset.ipynb|queries/condition_query.sql|queries/measurement_query.sql|queries/observation_query.sql|queries/procedure_query.sql|make_dataset
