@@ -151,21 +151,27 @@ names(variables) <- c('Virally Suppressed', 'Diabetes', 'Active Drug Use', 'Alco
 # format data for hexbin plot #
 ###############################
 
-df$rank <- row_number(df$Name)
-df$j <- 1
-df$i <- 1
-
-counter = 0
-offset <- 0.5 #offset for the hexagons when moving up a row
-for (row in 1:22){
-    # change offset when increasing rows
-    offset <- ifelse(offset == 0.5, 0, 0.5)
-    for (column in 1:22){
-        counter <- counter + 1
-        df[df$rank == counter,]$i <- row
-        df[df$rank == counter,]$j <- column + offset
+hexPosition <- function(df){
+    df$rank <- rank(-df$weightRank, ties.method = 'first')
+    df$j <- 0
+    df$i <- 0
+    
+    counter = 0
+    offset <- 0.5 #offset for the hexagons when moving up a row
+    for (row in 22:1){
+        # change offset when increasing rows
+        offset <- ifelse(offset == 0.5, 0, 0.5)
+        for (column in 1:22){
+            counter <- counter + 1
+            df[df$rank == counter,]$i <- row
+            df[df$rank == counter,]$j <- column + offset
+        }
     }
+    # return unquoted objects
+    return(df %>% subset(rank < 485))
 }
+
+
 
 #########################
 # prepare visualization #
@@ -194,7 +200,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                     #######################
                         tabsetPanel(
                             tabPanel("Overview",
-                                     column(width = 2,
+                                     column(width = 3,
                                             br(),
                                             # user-controlled prioritization
                                             dropdownButton(
@@ -205,7 +211,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                                     orientation = "vertical",
                                                     add_rank_list(
                                                         text = "Selected",
-                                                        labels = names(variables)[c(1, 3)],
+                                                        labels = names(variables)[c(1, 3, 6, 7)],
                                                         input_id = "selected"
                                                     ),
                                                     add_rank_list(
@@ -224,7 +230,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                      # hexagon plot #
                                      ################
                                      
-                                     column(width = 10,
+                                     column(width = 9,
                                      plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0)))
                             )),
                 
@@ -233,8 +239,11 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                 ##############
                 
                 fluidRow(
-                    DT::dataTableOutput("df")
+                    column(width = 4),
+                    column(width = 8, 
+                           DT::dataTableOutput("df")
                          )
+        )
 )
 
 
@@ -250,10 +259,9 @@ server <- function(input, output) {
     
     newData <- reactive({
         # get MAGIQ score (rankings) for each patient
-        index <- variables[input$selectedVariables_order] %in% variables[input$selectedVariables]
-        ordered_selected_Variables <- variables[input$selectedVariables_order][index]
-        MAGIQscore <- computeWeightedSum(df, ordered_selected_Variables)
-        df$weightRank <- MAGIQscore[,1]
+        data <- df %>% mutate(weightRank = round(
+                                                computeWeightedSum(df, variables[input$selected]), digits = 3))
+        data <- hexPosition(data)
     })
     
     #############
@@ -261,12 +269,8 @@ server <- function(input, output) {
     ############
     
     output$hex_plot <- renderPlot({
-        
-        # get MAGIQ score (rankings) for each patient
-        MAGIQscore <- computeWeightedSum(df, variables[input$selected])
-        df$weightRank <- MAGIQscore
 
-        ggplot(data = df, aes(x=i, y=j, fill = weightRank))+
+        ggplot(data = newData(), aes(x=i, y=j, fill = weightRank))+
             geom_hex(stat='identity')+
             scale_fill_gradientn(colours = ColRamp)+
             theme_bw()+
@@ -285,9 +289,10 @@ server <- function(input, output) {
     
     output$df <- DT::renderDT(server=FALSE,{
         
+        validate(need(input$plot_hover, "Please select a patient using your cursor"))
+        
         # get MAGIQ score (rankings) for each patient
-        MAGIQscore <- computeWeightedSum(df, variables[input$selected])
-        df$weightRank <- MAGIQscore
+        df <- newData()
         df <- df[order(-df$weightRank), ]
         df$Priority <- 1:nrow(df)
         rownames(df) <- 1:nrow(df)
@@ -314,10 +319,11 @@ server <- function(input, output) {
         # isolate patients with adjacent weightRanks
         patient_index <- rownames(patientDF)[1] # get index of patient under selection
         patient_index_plus = (as.numeric(patient_index) + 10)
-        ass_df = df[patient_index:patient_index_plus,]
+        proximal_df = df[patient_index:patient_index_plus,]
         
+
         # format table for plotting
-        DT::datatable(data = ass_df  %>% 
+        DT::datatable(data = proximal_df  %>% 
                           select(c('Name', variables[input$selected]), 'weightRank'),
                       rownames = FALSE, 
                       extensions = 'RowReorder',
