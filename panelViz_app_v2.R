@@ -200,7 +200,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                     #######################
                         tabsetPanel(
                             tabPanel("Overview",
-                                     column(width = 3,
+                                     column(width = 2,
                                             br(),
                                             # user-controlled prioritization
                                             dropdownButton(
@@ -230,7 +230,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                      # hexagon plot #
                                      ################
                                      
-                                     column(width = 9,
+                                     column(width = 10,
                                      plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0)))
                             )),
                 
@@ -282,8 +282,12 @@ server <- function(input, output) {
                   axis.text.y=element_blank(),axis.ticks=element_blank(),
                   axis.title.x=element_blank(),
                   axis.title.y=element_blank(),legend.position="none",
-                  panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-                  panel.grid.minor=element_blank(),plot.background=element_blank())
+                  #panel.background=element_blank(),
+                  panel.border=element_blank(),
+                  panel.grid.major=element_blank(),
+                  panel.grid.minor=element_blank()
+                  #plot.background=element_blank() # removes borders from the app
+                  )
         })
     
     
@@ -307,9 +311,6 @@ server <- function(input, output) {
         # map weightRanks to colors used by GGplot
         color <- unique(df[c("fill", "weightRank")])
         color$fill <- paste(color$fill)
-        print(rev(color$weightRank[1:length(color$weightRank)-1]))
-        print(color$fill)
-        
     
         # retrieve patient under cursor
         hover <- input$plot_hover # retrieve coordinates from user's cursor
