@@ -133,8 +133,22 @@ ON tbl.person_id = condition_occurrence.person_id
 WHERE condition_start_date >= Convert(datetime, '2018-01-01' ) AND
       condition_concept_id in (436665,432876,441836,440078,442570,
                                435226,439256,437528)
+UNION
+SELECT condition_occurrence.person_id, 'unstable_housing' dx
+FROM condition_occurrence
+JOIN (SELECT person_id
+      FROM condition_occurrence
+      WHERE condition_concept_id in (4241530,432554,439727)
+      GROUP BY person_id
+      HAVING count(*) >2) tbl
+ON tbl.person_id = condition_occurrence.person_id
+WHERE condition_start_date >= Convert(datetime, '2018-01-01' ) AND
+      condition_concept_id in (436665,432876,441836,440078,442570,
+                               435226,439256,437528)
 
 -- CONDITIONS
+-- homeless
+(4139934, 45561640,	45600336,44831984,	44826230,44834314)
 -- diabetes
 (201820, 201826,40482801,201254,195771)
 -- Active chronic hepatitis C - CONDITION

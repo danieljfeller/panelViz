@@ -112,11 +112,11 @@ df <- read.csv('data/panelViz_dataset.csv', fill = TRUE) %>%
            DM = toFactor(dx_diabetes),
            DrugAbuse =toFactor(dx_alcoholism), 
            AlcoholAbuse = toFactor(dx_drug_abuse),
-           UnstableHousing = toFactor(unstable_housing),
+           UnstableHousing = toFactor(dx_unstable_housing),
            NewDx = toFactor(new_dx),
            HCV = toFactor(dx_hcv),
            HTN = toFactor(dx_hypertension),
-           CVD = toFactor(dx_cardiovascular.disease),
+           CVD = toFactor(dx_cardiovascular_disease),
            CKD = toFactor(dx_ckd),
            Depression = toFactor(dx_depression),
            Anxiety = toFactor(dx_anxiety),
@@ -151,46 +151,33 @@ names(variables) <- c('Virally Suppressed', 'Diabetes', 'Active Drug Use', 'Alco
 # format data for hexbin plot #
 ###############################
 
-df$rank <- row_number(df$Name)
-df$j <- 1
-df$i <- 1
-
-counter = 0
-offset <- 0.5 #offset for the hexagons when moving up a row
-for (row in 1:22){
-    # change offset when increasing rows
-    offset <- ifelse(offset == 0.5, 0, 0.5)
-    for (column in 1:22){
-        counter <- counter + 1
-        df[df$rank == counter,]$i <- row
-        df[df$rank == counter,]$j <- column + offset
+hexPosition <- function(df){
+    df$rank <- rank(-df$weightRank, ties.method = 'first')
+    df$j <- 0
+    df$i <- 0
+    
+    counter = 0
+    offset <- 0.5 #offset for the hexagons when moving up a row
+    for (row in 22:1){
+        # change offset when increasing rows
+        offset <- ifelse(offset == 0.5, 0, 0.5)
+        for (column in 1:22){
+            counter <- counter + 1
+            df[df$rank == counter,]$i <- row
+            df[df$rank == counter,]$j <- column + offset
+        }
     }
+    # return unquoted objects
+    return(df %>% subset(rank < 485))
 }
+
+
 
 #########################
 # prepare visualization #
 #########################
 
-patientColors <- c('#fc9272', '#fa9473', '#f89574', '#f69775', '#f49876', '#f29a76', '#f19b77', 
-                   '#ef9c78', '#ee9d78', '#ec9e79', '#eba07a', '#e9a17a', '#e8a27b', '#e7a37c', 
-                   '#e5a47c', '#e4a57d', '#e3a67d', '#e2a67e', '#e1a77e', '#dfa87f', '#dea97f', 
-                   '#ddaa80', '#dcab80', '#dbac81', '#daac81', '#d9ad82', '#d8ae82', '#d7af83', 
-                   '#d6b083', '#d5b083', '#d4b184', '#d3b284', '#d2b385', '#d1b385', '#d1b486', 
-                   '#d0b586', '#cfb586', '#ceb687', '#cdb787', '#ccb788', '#cbb888', '#cab988', 
-                   '#cab989', '#c9ba89', '#c8ba89', '#c7bb8a', '#c6bc8a', '#c6bc8a', '#c5bd8b', 
-                   '#c4be8b', '#c3be8c', '#c3bf8c', '#c2bf8c', '#c1c08d', '#c0c18d', '#bfc18d', 
-                   '#bfc28e', '#bec28e', '#bdc38e', '#bcc48f', '#bcc48f', '#bbc58f', '#bac590', 
-                   '#bac690', '#b9c690', '#b8c790', '#b8c791', '#b7c891', '#b6c991', '#b5c992', 
-                   '#b5ca92', '#b4ca92', '#b3cb93', '#b3cb93', '#b2cc93', '#b1cc94', '#b1cd94', 
-                   '#b0cd94', '#afce95', '#afce95', '#aecf95', '#aecf95', '#add096', '#acd096', 
-                   '#acd196', '#abd197', '#aad297', '#aad297', '#a9d397', '#a8d398', '#a8d498', 
-                   '#a7d498', '#a6d599', '#a6d599', '#a5d699', '#a5d699', '#a4d79a', '#a3d79a', 
-                   '#a3d89a', '#a2d89a', '#a2d99b', '#a1d99b')
-
-gradientColors <- c('#a1d99b', '#aed397', '#b9cc93', '#c4c68e', '#cdbf8a', 
-                    '#d6b986', '#dfb182', '#e7aa7e', '#eea27a', '#f59a76', '#fc9272')
-
-ColRamp <- rev(designer.colors(n=5, col=brewer.pal(9, "Spectral")))
+ColRamp <- rev(designer.colors(n=10, col=brewer.pal(9, "Spectral")))
 
 # quantiles for all numeric variables
 CD4count_brks <- quantile(df$CD4count, probs = seq(.05, .95, .10), na.rm = TRUE)
@@ -224,7 +211,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                                     orientation = "vertical",
                                                     add_rank_list(
                                                         text = "Selected",
-                                                        labels = names(variables)[c(1, 3)],
+                                                        labels = names(variables)[c(1, 3, 6, 7)],
                                                         input_id = "selected"
                                                     ),
                                                     add_rank_list(
@@ -243,20 +230,20 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                      # hexagon plot #
                                      ################
                                      
-                                     column(width = 7,
-                                     plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0)),
-                                     
-                                     #######################
-                                     # patient information #
-                                     #######################
-                                     column(width = 3,
-                                            useShinydashboard(),
-                                            br(),
-                                            shinydashboard::box(status = "info",  width = 12,
-                                                                uiOutput("dynamicName"), uiOutput("dynamicVals")),
-                                            ))
+                                     column(width = 10,
+                                     plotOutput("hex_plot", hover = "plot_hover", hoverDelay = 0)))
                             )),
-                fluidRow()
+                
+                ##############
+                # data table #
+                ##############
+                
+                fluidRow(
+                    column(width = 4),
+                    column(width = 8, 
+                           DT::dataTableOutput("df")
+                         )
+        )
 )
 
 
@@ -272,11 +259,9 @@ server <- function(input, output) {
     
     newData <- reactive({
         # get MAGIQ score (rankings) for each patient
-        index <- variables[input$selectedVariables_order] %in% variables[input$selectedVariables]
-        ordered_selected_Variables <- variables[input$selectedVariables_order][index]
-        MAGIQscore <- computeWeightedSum(df, ordered_selected_Variables)
-        df$weightRank <- MAGIQscore[,1]
-        print(df)
+        data <- df %>% mutate(weightRank = round(
+                                                computeWeightedSum(df, variables[input$selected]), digits = 3))
+        data <- hexPosition(data)
     })
     
     #############
@@ -284,15 +269,8 @@ server <- function(input, output) {
     ############
     
     output$hex_plot <- renderPlot({
-        
 
-        # get MAGIQ score (rankings) for each patient
-        MAGIQscore <- computeWeightedSum(df, variables[input$selected])
-        print(MAGIQscore)
-       
-         df$weightRank <- MAGIQscore
-
-        ggplot(data = df, aes(x=i, y=j, fill = weightRank))+
+        ggplot(data = newData(), aes(x=i, y=j, fill = weightRank))+
             geom_hex(stat='identity')+
             scale_fill_gradientn(colours = ColRamp)+
             theme_bw()+
@@ -304,46 +282,62 @@ server <- function(input, output) {
                   axis.text.y=element_blank(),axis.ticks=element_blank(),
                   axis.title.x=element_blank(),
                   axis.title.y=element_blank(),legend.position="none",
-                  panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-                  panel.grid.minor=element_blank(),plot.background=element_blank())
+                  #panel.background=element_blank(),
+                  panel.border=element_blank(),
+                  panel.grid.major=element_blank(),
+                  panel.grid.minor=element_blank()
+                  #plot.background=element_blank() # removes borders from the app
+                  )
         })
     
-    # retrieve values to be reactively presented in UI
-    output$name <- renderPrint({
-        # retrieve coordinates from user's cursor
-        hover <- input$plot_hover 
-        # returns row from dataframe hover coordinators
-        name <- nearPoints(df, hover, threshold = 10)$Name[[1]]
-        # print name
+    
+    output$df <- DT::renderDT(server=FALSE,{
         
-        cat(sprintf("<b><font size=4>%s</b>",name))
-            })
+        validate(need(input$plot_hover, "Please select a patient using your cursor"))
+        
+        # get MAGIQ score (rankings) for each patient
+        df <- newData()
+        df <- df[order(-df$weightRank), ]
+        df$Priority <- 1:nrow(df)
+        rownames(df) <- 1:nrow(df)
+        
+        # retrieve patient colours from ggplot
+        g <- ggplot(data = df, aes(x=i, y=j, fill = weightRank))+
+            geom_hex(stat='identity')+
+            scale_fill_gradientn(colours = ColRamp)
+        ggplot_data <- ggplot_build(g)$data[1][[1]]
+        df$fill <- ggplot_data$fill
+        
+        # map weightRanks to colors used by GGplot
+        color <- unique(df[c("fill", "weightRank")])
+        color$fill <- paste(color$fill)
     
-    # renders reactive output variable 
-    output$dynamicName <- renderUI({
-        # only proceed if mouse coordinates exist
-        req(input$plot_hover) 
-        htmlOutput("name", inline = TRUE)
-    })
-    
-    # retrieve values to be reactively presented in UI
-    output$vals <- renderPrint({
-        # retrieve coordinates from user's cursor
-        hover <- input$plot_hover 
-        # returns row from dataframe hover coordinators
-        df <- nearPoints(df, hover, threshold = 10) %>% select(c('Name', variables[input$selected]))
-        # print variables
-        for (colIndex in 2:ncol(df)){
-            cat(sprintf("<font size=4>%s: <font size=4>%s<br>", c('Name', names(variables))[colIndex], df[1,colIndex]))
-        }
-    })
-    
-    # renders reactive output variables
-    output$dynamicVals <- renderUI({
-        # only proceed if mouse coordinates exist
-        req(input$plot_hover) 
-        htmlOutput("vals", inline = TRUE)
-    })
+        # retrieve patient under cursor
+        hover <- input$plot_hover # retrieve coordinates from user's cursor
+        patientDF <- nearPoints(df, hover, threshold = 10) %>% 
+                            select(c(Priority, 'Name', variables[input$selected]), 'weightRank')
+        
+        # isolate patients with adjacent weightRanks
+        patient_index <- rownames(patientDF)[1] # get index of patient under selection
+        patient_index_plus = (as.numeric(patient_index) + 10)
+        proximal_df = df[patient_index:patient_index_plus,]
+        
+
+        # format table for plotting
+        DT::datatable(data = proximal_df  %>% 
+                          select(c('Name', variables[input$selected]), 'weightRank'),
+                      rownames = FALSE, 
+                      extensions = 'RowReorder',
+                      selection = 'none',
+                      autoHideNavigation = TRUE) %>%
+            # add color to patient names
+            formatStyle('weightRank',
+                        target = 'row',
+                        backgroundColor = styleInterval(cuts = rev(color$weightRank[1:length(color$weightRank)]), 
+                                                        values = c(rev(color$fill), 10000)),
+                        #color = 'White',
+                        fontWeight = 'bold')
+    }) 
 }
 
 #####################
