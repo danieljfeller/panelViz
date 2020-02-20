@@ -293,7 +293,7 @@ server <- function(input, output) {
     
     output$df <- DT::renderDT(server=FALSE,{
         
-        validate(need(input$plot_hover, "Please select a patient using your cursor"))
+        #validate(need(input$plot_hover, "Please select a patient using your cursor"))
         
         # get MAGIQ score (rankings) for each patient
         df <- newData()
@@ -312,11 +312,16 @@ server <- function(input, output) {
         color <- unique(df[c("fill", "weightRank")])
         color$fill <- paste(color$fill)
     
-        # retrieve patient under cursor
-        hover <- input$plot_hover # retrieve coordinates from user's cursor
-        patientDF <- nearPoints(df, hover, threshold = 10) %>% 
-                            select(c(Priority, 'Name', variables[input$selected]), 'weightRank')
-        
+        # retrieve patient under cursor IF cursor is over a hexagon; otherwise plot entire dataframe
+        if (is.null(input$plot_hover)) {
+            patientDF <- df %>% 
+                select(c(Priority, 'Name', variables[input$selected]), 'weightRank')
+        } else {
+            hover <- input$plot_hover # retrieve coordinates from user's cursor
+            patientDF <- nearPoints(df, hover, threshold = 10) %>% 
+                select(c(Priority, 'Name', variables[input$selected]), 'weightRank')
+        }
+
         # isolate patients with adjacent weightRanks
         patient_index <- rownames(patientDF)[1] # get index of patient under selection
         patient_index_plus = (as.numeric(patient_index) + 10)

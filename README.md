@@ -10,8 +10,6 @@ Related to research on visual analytics in healthcare
 	- what should our questions be? do we ask about specific features?
 
 
-## Data Dictionary edits
-1. Data Dictionary and BOTH tools must have the same variable names. This was confusing even for me.
 
 ## Dataset edits
 We need more virally unsuppressed patients in the dataset.
