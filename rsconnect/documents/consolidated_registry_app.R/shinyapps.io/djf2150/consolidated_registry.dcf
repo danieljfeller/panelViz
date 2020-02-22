@@ -5,9 +5,9 @@ account: djf2150
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1618317
-bundleId: 2801323
+bundleId: 2820540
 url: https://djf2150.shinyapps.io/consolidated_registry/
-when: 1581697892.86175
+when: 1582404258.06613
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: .RData|basic_registry_app.R|evaluation_results.xlsx|panelViz_app.R|README.md|data/old_baseline_dataset.csv|data/panelViz_dataset.csv|data/synthetic_patients.csv|data/.ipynb_checkpoints/OHDSI dataset creation-checkpoint.ipynb|deprecated/dashboard_app.R|deprecated/dashboard_ui.R|deprecated/panelViz_app_with_clustering.R|notebooks/OHDSIdataset.ipynb|queries/condition_query.sql|queries/measurement_query.sql|queries/observation_query.sql|queries/procedure_query.sql|make_dataset
+ignoredFiles: .RData|basic_registry_app.R|panelViz_app.R|README.md|deprecated/dashboard_app.R|deprecated/dashboard_ui.R|deprecated/panelViz_app_with_clustering.R|evaluation/compute_accuracy.ipynb|evaluation/evaluation_results.xlsx|evaluation/.ipynb_checkpoints/compute_accuracy-checkpoint.ipynb|notebooks/OHDSIdataset.ipynb|queries/condition_query.sql|queries/measurement_query.sql|queries/observation_query.sql|queries/procedure_query.sql|make_dataset|training_apps

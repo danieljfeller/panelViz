@@ -104,9 +104,9 @@ formatSort <- function(selectedOrder){
 # load & format data #
 ######################
 
-rawDF <- read.csv('data/panelViz_dataset.csv')
+rawDF <- read.csv('data/modified_panelViz_dataset.csv')
 
-df <- read.csv('data/panelViz_dataset.csv', fill = TRUE) %>%
+df <- read.csv('data/modified_panelViz_dataset.csv', fill = TRUE) %>%
     mutate(Name = name,
            VLS = toFactor(vls),
            DM = toFactor(dx_diabetes),
@@ -211,7 +211,7 @@ ui <- fluidPage(theme = shinytheme("sandstone"),
                                                     orientation = "vertical",
                                                     add_rank_list(
                                                         text = "Selected",
-                                                        labels = names(variables)[c(1, 3, 6, 7)],
+                                                        labels = names(variables)[c(1, 3)],
                                                         input_id = "selected"
                                                     ),
                                                     add_rank_list(

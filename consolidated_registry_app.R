@@ -23,9 +23,9 @@ toFactor <- function(x){
 # load & format data #
 ######################
 
-rawDF <- read.csv('data/baseline_dataset.csv')
+rawDF <- read.csv('data/modified_baseline_dataset.csv')
 
-df <- read.csv('data/baseline_dataset.csv', fill = TRUE) %>%
+df <- read.csv('data/modified_baseline_dataset.csv', fill = TRUE) %>%
   mutate(Name = name,
          VLS = toFactor(vls),
          DM = toFactor(dx_diabetes),
