@@ -18,34 +18,24 @@ toFactor <- function(x){
   return(as.factor(ifelse(as.logical(x) == TRUE, "Yes", "No")))
 }
 
-# range standardization
-standard_range <- function(x){
-  (x-min(x))/(max(x)-min(x))
-}
-
-# converts Yes/No to 1/0
-yes2one <- function(x){
-  return(ifelse(x =='Yes', 1, 0))
-}
-
 
 ######################
 # load & format data #
 ######################
 
-rawDF <- read.csv('data/baseline_dataset.csv')
+rawDF <- read.csv('training_dataset.csv')
 
-df <- read.csv('data/baseline_dataset.csv', fill = TRUE) %>%
+df <- read.csv('training_dataset.csv', fill = TRUE) %>%
   mutate(Name = name,
          VLS = toFactor(vls),
          DM = toFactor(dx_diabetes),
          DrugAbuse =toFactor(dx_alcoholism), 
          AlcoholAbuse = toFactor(dx_drug_abuse),
-         UnstableHousing = toFactor(unstable_housing),
+         UnstableHousing = toFactor(dx_unstable_housing),
          NewDx = toFactor(new_dx),
          HCV = toFactor(dx_hcv),
          HTN = toFactor(dx_hypertension),
-         CVD = toFactor(dx_cardiovascular.disease),
+         CVD = toFactor(dx_cardiovascular_disease),
          CKD = toFactor(dx_ckd),
          Depression = toFactor(dx_depression),
          Anxiety = toFactor(dx_anxiety),
@@ -70,11 +60,11 @@ df <- df[sample(nrow(df)), ]
 
 # get all cvariable names (excluding name)
 variables = colnames(df)[-c(1:length(colnames))]
-
 names(variables) <- c('Virally Suppressed', 'Diabetes', 'Active Drug Use', 'Alcoholism', 'Unstable Housing', 'New HIV Diagnosis',
-  'Chronic HCV', 'Hypertension', 'Cardiovascular Disease', 'Chronic Kidney Disease', 'Major Depression', 
-  'Anxiety Disorder', 'Schizophrenia', 'Most recent HbA1c value', 'Most recent CD4 count', '# Office visits',
-  '# Emergency Room visits', '# Inpatient admissions')
+                      'Chronic HCV', 'Hypertension', 'Cardiovascular Disease', 'Chronic Kidney Disease', 'Major Depression', 
+                      'Anxiety Disorder', 'Schizophrenia', 'Most recent HbA1c value', 'Most recent CD4 count', '# Office visits',
+                      '# Emergency Room visits', '# Inpatient admissions')
+
 
 #############
 # create UI #
@@ -86,13 +76,13 @@ ui <- fluidPage(
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
     # Sidebar panel for inputs ----
-    sidebarPanel(
+    sidebarPanel(width = 2,
       # Input: Slider for the number of bins ----
-      selectInput("selected_variables", label = h3("Select Care Gap"), 
-                  choices = names(variables), 
-                  selected = 1)),
+      sortableCheckboxGroupInput("selected_variables", label = h3("Select Care Gaps"), 
+                         choices = names(variables),
+                         selected = c('VLS'))),
     # Main panel for displaying outputs ----
-    mainPanel(
+    mainPanel(width = 10,
       # Output: interactive table
       DT::dataTableOutput("patientDF")
     )
@@ -103,22 +93,28 @@ ui <- fluidPage(
 # create server #
 #################
 
-server <- function(input, output) {
+server <- function(input, output){
   
   ####################
   # get updated data #
   ####################
   
-  
   # data table
-  output$patientDF = DT::renderDT(
+  output$patientDF = DT::renderDT(server=FALSE,{
 
+    ordered_selected_variables <- input$selected_variables_order[input$selected_variables_order %in% input$selected_variables]
+    ordered_selected_variables <- variables[ordered_selected_variables]
     #########################
     # select sorting method #
     #########################
     
     DT::datatable( 
-      data = df %>% select(c('Name', variables[input$selected_variables])) %>% tibble::rownames_to_column(),
+      data = df %>% 
+        select(c('Name', variables[input$selected_variables])) %>% 
+        arrange_at(
+          ordered_selected_variables,
+          desc) %>%
+        tibble::rownames_to_column(),
       rownames = FALSE, 
       extensions = 'RowReorder',
       selection = 'none',
@@ -127,7 +123,7 @@ server <- function(input, output) {
                      pageLength = 500,
                      columnDefs = list(list(visible=FALSE, targets=c(0))),
                      rowReorder = TRUE))
-  )
+  })
 }
   
 #####################

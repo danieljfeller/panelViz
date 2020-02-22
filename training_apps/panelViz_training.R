@@ -104,9 +104,9 @@ formatSort <- function(selectedOrder){
 # load & format data #
 ######################
 
-rawDF <- read.csv('../data/synthetic_patients.csv')
+rawDF <- read.csv('training_dataset.csv')
 
-df <- read.csv('../data/synthetic_patients.csv', fill = TRUE) %>%
+df <- read.csv('training_dataset.csv', fill = TRUE) %>%
     mutate(Name = name,
            VLS = toFactor(vls),
            DM = toFactor(dx_diabetes),
@@ -183,9 +183,9 @@ ColRamp <- rev(designer.colors(n=10, col=brewer.pal(9, "Spectral")))
 CD4count_brks <- quantile(df$CD4count, probs = seq(.05, .95, .10), na.rm = TRUE)
 HbA1c_brks <- quantile(df$HbA1c, probs = seq(.05, .95, .10), na.rm = TRUE)
 
-office_brks <- quantile(df$OfficeVisits, probs = seq(.05, .95, .10), na.rm = TRUE)
-er_brks <- quantile(df$ERvisits, probs = seq(.05, .95, .10), na.rm = TRUE)
-inpatient_brks <- quantile(df$InpatientAdmits, probs = seq(.05, .95, .10), na.rm = TRUE)
+office_brks <- quantile(df$OfficeVisits, probs = c(0,0.75,0.90, 1), na.rm = TRUE)
+er_brks <- quantile(df$ERvisits, probs = c(0,0.75,0.90, 1), na.rm = TRUE)
+inpatient_brks <- quantile(df$InpatientAdmits, probs = c(0,0.75,0.90, 1), na.rm = TRUE)
 
 #############
 # create UI #
@@ -293,7 +293,7 @@ server <- function(input, output) {
     
     output$df <- DT::renderDT(server=FALSE,{
         
-        validate(need(input$plot_hover, "Please select a patient using your cursor"))
+        #validate(need(input$plot_hover, "Please select a patient using your cursor"))
         
         # get MAGIQ score (rankings) for each patient
         df <- newData()
@@ -312,11 +312,16 @@ server <- function(input, output) {
         color <- unique(df[c("fill", "weightRank")])
         color$fill <- paste(color$fill)
     
-        # retrieve patient under cursor
-        hover <- input$plot_hover # retrieve coordinates from user's cursor
-        patientDF <- nearPoints(df, hover, threshold = 10) %>% 
-                            select(c(Priority, 'Name', variables[input$selected]), 'weightRank')
-        
+        # retrieve patient under cursor IF cursor is over a hexagon; otherwise plot entire dataframe
+        if (is.null(input$plot_hover)) {
+            patientDF <- df %>% 
+                select(c(Priority, 'Name', variables[input$selected]), 'weightRank')
+        } else {
+            hover <- input$plot_hover # retrieve coordinates from user's cursor
+            patientDF <- nearPoints(df, hover, threshold = 10) %>% 
+                select(c(Priority, 'Name', variables[input$selected]), 'weightRank')
+        }
+
         # isolate patients with adjacent weightRanks
         patient_index <- rownames(patientDF)[1] # get index of patient under selection
         patient_index_plus = (as.numeric(patient_index) + 10)

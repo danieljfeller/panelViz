@@ -1,0 +1,13 @@
+name: training_apps
+title: training_apps
+username:
+account: djf2150
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1848766
+bundleId: 2820282
+url: https://djf2150.shinyapps.io/training_apps/
+when: 1582392313.85122
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: registry_training.R

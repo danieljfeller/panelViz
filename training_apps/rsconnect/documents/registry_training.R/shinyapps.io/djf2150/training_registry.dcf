@@ -1,0 +1,13 @@
+name: training_registry
+title: training_registry
+username:
+account: djf2150
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1848765
+bundleId: 2820280
+url: https://djf2150.shinyapps.io/training_registry/
+when: 1582392193.30335
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: panelViz_training.R

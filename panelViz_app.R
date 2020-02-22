@@ -183,9 +183,9 @@ ColRamp <- rev(designer.colors(n=10, col=brewer.pal(9, "Spectral")))
 CD4count_brks <- quantile(df$CD4count, probs = seq(.05, .95, .10), na.rm = TRUE)
 HbA1c_brks <- quantile(df$HbA1c, probs = seq(.05, .95, .10), na.rm = TRUE)
 
-office_brks <- quantile(df$OfficeVisits, probs = seq(.05, .95, .10), na.rm = TRUE)
-er_brks <- quantile(df$ERvisits, probs = seq(.05, .95, .10), na.rm = TRUE)
-inpatient_brks <- quantile(df$InpatientAdmits, probs = seq(.05, .95, .10), na.rm = TRUE)
+office_brks <- quantile(df$OfficeVisits, probs = c(0,0.75,0.90, 1), na.rm = TRUE)
+er_brks <- quantile(df$ERvisits, probs = c(0,0.75,0.90, 1), na.rm = TRUE)
+inpatient_brks <- quantile(df$InpatientAdmits, probs = c(0,0.75,0.90, 1), na.rm = TRUE)
 
 #############
 # create UI #
